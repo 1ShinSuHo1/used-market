@@ -1,5 +1,6 @@
 package com.wonsu.used_market.user.service;
 
+import com.wonsu.used_market.user.domain.Provider;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.dto.UserCreateDto;
 import com.wonsu.used_market.user.dto.UserLoginDto;
@@ -51,6 +52,21 @@ public class UserService {
             throw new IllegalArgumentException("password가 일치하지 않습니다.");
         }
 
+        return user;
+    }
+
+    public User getUserByProviderId(String providerId) {
+        User user = userRepository.findByProviderId(providerId).orElse(null);
+        return user;
+    }
+
+    public User createOauth(String providerId, String email, Provider provider) {
+        User user = User.builder()
+                .email(email)
+                .provider(provider)
+                .providerId(providerId)
+                .build();
+        userRepository.save(user);
         return user;
     }
 

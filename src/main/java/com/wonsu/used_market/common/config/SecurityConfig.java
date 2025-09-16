@@ -1,5 +1,6 @@
 package com.wonsu.used_market.common.config;
 
+import com.wonsu.used_market.common.auth.JwtTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -17,6 +19,12 @@ import java.util.Arrays;
 
 @Configuration
 public class SecurityConfig {
+
+    private final JwtTokenFilter jwtTokenFilter;
+
+    public SecurityConfig(JwtTokenFilter jwtTokenFilter) {
+        this.jwtTokenFilter = jwtTokenFilter;
+    }
 
     @Bean
     public PasswordEncoder makePassword() {
@@ -35,7 +43,9 @@ public class SecurityConfig {
                 // 세션방식을 비활성화
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 특정 url 패턴에 대해서는 인증처리(Authentication 객체생성) 제외
-                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login").permitAll().anyRequest().authenticated())
+                // UsernamePasswordAuthenticationFilter 이클래스에서 폼로그인 인증을 처리
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

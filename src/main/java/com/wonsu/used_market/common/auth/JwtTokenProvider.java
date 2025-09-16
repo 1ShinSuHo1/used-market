@@ -1,6 +1,7 @@
 package com.wonsu.used_market.common.auth;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,4 +42,26 @@ public class JwtTokenProvider {
                 .compact();
         return token;
     }
+
+    //유효성 위조 만료 검사
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    //페이로드에서 정보 파싱
+    public String getEmail(String token) {
+        return Jwts.parserBuilder().setSigningKey(SECRET_KEY).build()
+                .parseClaimsJws(token).getBody().getSubject();
+    }
+    public String getRole(String token) {
+        return Jwts.parserBuilder().setSigningKey(SECRET_KEY).build()
+                .parseClaimsJws(token).getBody().get("role", String.class);
+    }
+
+
 }

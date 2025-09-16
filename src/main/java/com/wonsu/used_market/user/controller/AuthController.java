@@ -2,9 +2,11 @@ package com.wonsu.used_market.user.controller;
 
 
 import com.wonsu.used_market.common.auth.JwtTokenProvider;
+import com.wonsu.used_market.user.domain.Provider;
 import com.wonsu.used_market.user.domain.User;
-import com.wonsu.used_market.user.dto.UserCreateDto;
-import com.wonsu.used_market.user.dto.UserLoginDto;
+import com.wonsu.used_market.user.dto.*;
+import com.wonsu.used_market.user.service.GoogleService;
+import com.wonsu.used_market.user.service.KakaoService;
 import com.wonsu.used_market.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -25,16 +27,20 @@ public class AuthController {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final GoogleService googleService;
+    private final KakaoService kakaoService;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, GoogleService googleService, KakaoService kakaoService) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.googleService = googleService;
+        this.kakaoService = kakaoService;
     }
 
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserCreateDto userCreateDto) {
-        User user = userService.create(userCreateDto);
+        User user =  userService.create(userCreateDto);
         return new ResponseEntity<>(user.getId(), HttpStatus.CREATED);
     }
 
@@ -51,6 +57,50 @@ public class AuthController {
         loginInfo.put("token", jwtToken);
 
         return new ResponseEntity<>(loginInfo, HttpStatus.OK);
+    }
+
+    @PostMapping("/oauth/google/login")
+    public ResponseEntity<?> googleLogin(@RequestBody RedirectDto redirectDto) {
+        // accesstoken 발급
+        AccessTokenDto accessTokenDto = googleService.getAccessToken(redirectDto.getCode());
+
+        // 사용자 정보 얻기
+        GoogleProfileDto googleProfileDto =  googleService.getGoogleProfile(accessTokenDto.getAccess_token());
+        //회원가입이 되어 있지 않다면 회원가입
+        User originalUser = userService.getUserByProviderId(googleProfileDto.getSub());
+        if(originalUser == null){
+            originalUser = userService.createOauth(googleProfileDto.getSub(),googleProfileDto.getEmail(), Provider.GOOGLE);
+        }
+        //회원가입이 되어있는 회원이라면 토큰발급
+        String jwtToken = jwtTokenProvider.createToken(originalUser.getEmail(),originalUser.getRole().toString());
+
+        Map<String, Object> loginInfo = new HashMap<>();
+        loginInfo.put("id", originalUser.getId());
+        loginInfo.put("token", jwtToken);
+
+        return new ResponseEntity<>(loginInfo, HttpStatus.OK);
+
+    }
+
+    @PostMapping("/oauth/kakao/login")
+    public ResponseEntity<?> kakaoLogin(@RequestBody RedirectDto redirectDto) {
+        AccessTokenDto accessTokenDto = kakaoService.getAccessToken(redirectDto.getCode());
+
+        KakaoProfileDto kakaoProfileDto = kakaoService.getKakaoProfile(accessTokenDto.getAccess_token());
+
+        User originalUser = userService.getUserByProviderId(kakaoProfileDto.getId());
+        if(originalUser == null){
+            originalUser = userService.createOauth(kakaoProfileDto.getId(),kakaoProfileDto.getKakao_account().getEmail(), Provider.KAKAO);
+        }
+
+        String jwtToken = jwtTokenProvider.createToken(originalUser.getEmail(),originalUser.getRole().toString());
+
+        Map<String, Object> loginInfo = new HashMap<>();
+        loginInfo.put("id", originalUser.getId());
+        loginInfo.put("token", jwtToken);
+
+        return new ResponseEntity<>(loginInfo, HttpStatus.OK);
+
     }
     
 }
