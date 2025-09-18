@@ -1,10 +1,13 @@
 package com.wonsu.used_market.user.service;
 
+import com.wonsu.used_market.exception.BusinessException;
+import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.user.domain.Provider;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.dto.UserCreateDto;
 import com.wonsu.used_market.user.dto.UserLoginDto;
 import com.wonsu.used_market.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +17,7 @@ import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -28,11 +32,11 @@ public class UserService {
     public User  create(UserCreateDto userCreateDto) {
         // 이메일 중복 확인
         if(userRepository.existsByEmail(userCreateDto.getEmail())){
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
         // 닉네임 중복 확인
         if(userRepository.existsByNickname(userCreateDto.getNickname())){
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
 
@@ -58,14 +62,16 @@ public class UserService {
         Optional<User> optUser = userRepository.findByEmail(userLoginDto.getEmail());
         //이메일이 있는지 없는지 검증
         if(!optUser.isPresent()) {
-            throw new IllegalArgumentException("email이 존재하지 않습니다.");
+            log.warn("로그인 실패 - 존재하지 않는 이메일: {}", userLoginDto.getEmail());
+            throw new BusinessException(ErrorCode.LOGIN_FAILED); // ✅ 예외 던지기
         }
 
         User user = optUser.get();
 
         //로그인할때의 비밀번호가 데이터베이스에 있는 암호화된 비밀번호와 일치하는지 비교
         if(!passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("password가 일치하지 않습니다.");
+            log.warn("로그인 실패 - 비밀번호 불일치 (email: {})", userLoginDto.getEmail());
+            throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
 
         return user;
@@ -77,9 +83,14 @@ public class UserService {
     }
 
     @Transactional
-    public User createOauth(String providerId, String email, Provider provider) {
+    public User createOauth(String providerId, String email, Provider provider,boolean emailVerified) {
         // oauth 회원가입자들을 위한 닉네임 자동생성
-        String randomNickname = "user_" + UUID.randomUUID().toString().substring(0, 8);
+        String randomNickname;
+
+        // 중복 방어 루프
+        do {
+            randomNickname = "user_" + UUID.randomUUID().toString().substring(0, 8);
+        } while (userRepository.existsByNickname(randomNickname));
 
         User user = User.builder()
                 .email(email)
@@ -87,6 +98,11 @@ public class UserService {
                 .providerId(providerId)
                 .nickname(randomNickname)
                 .build();
+
+        if(emailVerified){
+            user.verifyEmail();
+        }
+
         userRepository.save(user);
         return user;
     }
