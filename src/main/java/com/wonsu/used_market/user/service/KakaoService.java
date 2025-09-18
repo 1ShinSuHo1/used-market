@@ -1,16 +1,18 @@
 package com.wonsu.used_market.user.service;
 
 import com.wonsu.used_market.user.dto.AccessTokenDto;
-import com.wonsu.used_market.user.dto.GoogleProfileDto;
 import com.wonsu.used_market.user.dto.KakaoProfileDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
+
 @Service
+@Transactional
 public class KakaoService {
     @Value("${oauth.kakao.client-id}")
     private String kakaoClientId;

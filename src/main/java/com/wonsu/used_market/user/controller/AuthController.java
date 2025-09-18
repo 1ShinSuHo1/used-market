@@ -67,7 +67,7 @@ public class AuthController {
         // 사용자 정보 얻기
         GoogleProfileDto googleProfileDto =  googleService.getGoogleProfile(accessTokenDto.getAccess_token());
         //회원가입이 되어 있지 않다면 회원가입
-        User originalUser = userService.getUserByProviderId(googleProfileDto.getSub());
+        User originalUser = userService.getUserByProviderId(Provider.GOOGLE, googleProfileDto.getSub());
         if(originalUser == null){
             originalUser = userService.createOauth(googleProfileDto.getSub(),googleProfileDto.getEmail(), Provider.GOOGLE);
         }
@@ -88,7 +88,7 @@ public class AuthController {
 
         KakaoProfileDto kakaoProfileDto = kakaoService.getKakaoProfile(accessTokenDto.getAccess_token());
 
-        User originalUser = userService.getUserByProviderId(kakaoProfileDto.getId());
+        User originalUser = userService.getUserByProviderId(Provider.KAKAO, kakaoProfileDto.getId());
         if(originalUser == null){
             originalUser = userService.createOauth(kakaoProfileDto.getId(),kakaoProfileDto.getKakao_account().getEmail(), Provider.KAKAO);
         }
