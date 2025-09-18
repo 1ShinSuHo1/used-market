@@ -5,11 +5,13 @@ import com.wonsu.used_market.user.dto.GoogleProfileDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Service
+@Transactional
 public class GoogleService {
 
     @Value("${oauth.google.client-id}")

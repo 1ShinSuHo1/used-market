@@ -5,14 +5,15 @@ import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.dto.UserCreateDto;
 import com.wonsu.used_market.user.dto.UserLoginDto;
 import com.wonsu.used_market.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
-@Transactional()
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -23,7 +24,18 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     public User  create(UserCreateDto userCreateDto) {
+        // 이메일 중복 확인
+        if(userRepository.existsByEmail(userCreateDto.getEmail())){
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+        // 닉네임 중복 확인
+        if(userRepository.existsByNickname(userCreateDto.getNickname())){
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
+
         User user = User.builder()
                 .email(userCreateDto.getEmail())
                 .password(passwordEncoder.encode(userCreateDto.getPassword()))//비밀번호 암호화
@@ -33,6 +45,10 @@ public class UserService {
                 .phone(userCreateDto.getPhone())
                 .address(userCreateDto.getAddress())
                 .build();
+
+        //일단 이메일 인증을 회원가입시 true로 설정 나중에 디벨롭 예정
+        user.verifyEmail();
+
         userRepository.save(user);
         return user;
     }
@@ -55,16 +71,21 @@ public class UserService {
         return user;
     }
 
-    public User getUserByProviderId(String providerId) {
-        User user = userRepository.findByProviderId(providerId).orElse(null);
-        return user;
+    public User getUserByProviderId(Provider provider, String providerId) {
+        return userRepository.findByProviderAndProviderId(provider, providerId)
+                .orElse(null);
     }
 
+    @Transactional
     public User createOauth(String providerId, String email, Provider provider) {
+        // oauth 회원가입자들을 위한 닉네임 자동생성
+        String randomNickname = "user_" + UUID.randomUUID().toString().substring(0, 8);
+
         User user = User.builder()
                 .email(email)
                 .provider(provider)
                 .providerId(providerId)
+                .nickname(randomNickname)
                 .build();
         userRepository.save(user);
         return user;
