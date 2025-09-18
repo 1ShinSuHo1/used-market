@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 public class AccessTokenDto {
 
     private String access_token;
-    private String expires_in;
+    private int expires_in;
     private String scope;
-    private String id_token;
 }
