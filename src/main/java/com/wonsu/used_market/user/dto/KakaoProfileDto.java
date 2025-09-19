@@ -20,6 +20,6 @@ public class KakaoProfileDto {
     @JsonIgnoreProperties(ignoreUnknown = true)//없는 필드는 자동무시
     public static class KakaoAccount {
         private String email;
-        private String is_email_verified;
+        private boolean is_email_verified;
     }
 }
