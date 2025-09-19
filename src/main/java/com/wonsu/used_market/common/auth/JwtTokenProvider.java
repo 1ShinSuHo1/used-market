@@ -1,9 +1,8 @@
 package com.wonsu.used_market.common.auth;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.wonsu.used_market.exception.BusinessException;
+import com.wonsu.used_market.exception.ErrorCode;
+import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -44,12 +43,15 @@ public class JwtTokenProvider {
     }
 
     //유효성 위조 만료 검사
-    public boolean validateToken(String token) {
+    public void validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
-            return true;
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(ErrorCode.JWT_EXPIRED, e);
+        } catch (UnsupportedJwtException e) {
+            throw new BusinessException(ErrorCode.JWT_UNSUPPORTED, e);
         } catch (JwtException | IllegalArgumentException e) {
-            return false;
+            throw new BusinessException(ErrorCode.JWT_INVALID, e);
         }
     }
 
