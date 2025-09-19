@@ -1,5 +1,6 @@
 package com.wonsu.used_market.common.auth;
 
+import com.wonsu.used_market.exception.BusinessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.*;
@@ -24,8 +25,12 @@ import java.util.List;
 @Component
 public class JwtTokenFilter extends GenericFilter {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final JwtTokenProvider jwtTokenProvider;
+
+
+    public JwtTokenFilter(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -35,31 +40,36 @@ public class JwtTokenFilter extends GenericFilter {
 
         try {
             if (token != null) {
-                if (!token.substring(0, 7).equals("Bearer ")) {
+                if (!token.startsWith("Bearer ")) {
                     throw new AuthenticationServiceException("Bearer 형식이 아닙니다");
                 }
                 String jwtToken = token.substring(7);
 
-                // 토큰 검증 및 claims(payload)추출
-                Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(secretKey)
-                        .build()
-                        .parseClaimsJws(jwtToken)
-                        .getBody();
+                jwtTokenProvider.validateToken(jwtToken);
+
+                String email = jwtTokenProvider.getEmail(jwtToken);
+                String role = jwtTokenProvider.getRole(jwtToken);
+
+
                 // Authentication 객체 생성(인증객체)
                 List<GrantedAuthority> authorities = new ArrayList<>();
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + claims.get("role")) );
-                UserDetails userDetails = new User(claims.getSubject(),"",authorities);
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+
+                UserDetails userDetails = new User(email,"",authorities);
                 Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, jwtToken, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
             chain.doFilter(request, response);
-        }catch (Exception e) {
-            e.printStackTrace();
+        }catch (BusinessException e) {
+
+            httpServletResponse.setStatus(e.getErrorCode().getStatus().value());
+            httpServletResponse.setContentType("application/json;charset=utf-8");
+            httpServletResponse.getWriter().write(e.getErrorCode().getMessage());
+
+        } catch (Exception e) {
             httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             httpServletResponse.setContentType("application/json;charset=utf-8");
             httpServletResponse.getWriter().write("invalid token");
-
         }
     }
 }
