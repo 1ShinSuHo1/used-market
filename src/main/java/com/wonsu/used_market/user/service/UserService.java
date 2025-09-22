@@ -6,6 +6,7 @@ import com.wonsu.used_market.user.domain.Provider;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.dto.UserCreateDto;
 import com.wonsu.used_market.user.dto.UserLoginDto;
+import com.wonsu.used_market.user.dto.UserUpdateRequestDto;
 import com.wonsu.used_market.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -109,6 +110,37 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    //내 정보 수정
+    //jpa 더티체킹으로 자동반영
+    @Transactional
+    public User updateUser(Long userId, UserUpdateRequestDto dto){
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        //닉네임 변경시 중복검사
+        if(dto.getNickname() != null && !dto.getNickname().equals(user.getNickname())) {
+            if(userRepository.existsByNickname(dto.getNickname())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
+            }
+            user.changeNickname(dto.getNickname());
+        }
+
+        if (dto.getPhone() != null) user.changePhone(dto.getPhone());
+        if (dto.getAddr() != null) user.changeAddr(dto.getAddr());
+        if (dto.getName() != null) user.changeName(dto.getName());
+        if (dto.getBirthDate() != null) user.changeBirthDate(dto.getBirthDate());
+        if (dto.getPassword() != null) user.changePassword(passwordEncoder.encode(dto.getPassword()));
+
+
+        return user;
+    }
+
+    @Transactional
+    //내정보 삭제
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        userRepository.delete(user);
     }
 
 
