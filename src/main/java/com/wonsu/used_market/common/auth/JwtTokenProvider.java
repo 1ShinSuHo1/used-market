@@ -3,6 +3,7 @@ package com.wonsu.used_market.common.auth;
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import io.jsonwebtoken.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,32 +12,46 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
     //인코딩된 시크릿키
     private final String secretKey;
 
-    private final int expiration;
+    private final int accessExpiration;
+
+    private final int refreshExpiration;
 
     //어떤 암호화를 쓸껀지 설정된 시크릿키
     private Key SECRET_KEY;
 
-    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey,@Value("${jwt.expiration}") int expiration) {
+    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey, @Value("${jwt.expiration}") int accessExpiration,@Value("${jwt.refresh-expiration}") int refreshExpiration) {
         this.secretKey = secretKey;
-        this.expiration = expiration;
+        this.accessExpiration = accessExpiration;
+        this.refreshExpiration = refreshExpiration;
 
         //디코딩 시키고 디코딩된문자열을 샤 알고리즘 적용
         this.SECRET_KEY = new SecretKeySpec(java.util.Base64.getDecoder().decode(secretKey), SignatureAlgorithm.HS512.getJcaName());
     }
 
-    public String createToken(String email, String role) {
+    public String createAccessToken(String email, String role) {
+        return createToken(email, role, accessExpiration);
+    }
+
+    public String createRefreshToken(String email, String role) {
+        return createToken(email, role, refreshExpiration);
+    }
+
+
+    public String createToken(String email, String role , long expirationMinutes) {
         // claims는 jwt토큰의 payload부분을 의미
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("role", role);
         Date now = new Date();
+
         String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + expiration * 60 * 1000L)) //gettime은 밀리초 단위다
+                .setExpiration(new Date(now.getTime() + expirationMinutes * 60 * 1000L)) //gettime은 밀리초 단위다
                 .signWith(SECRET_KEY)
                 .compact();
         return token;
@@ -47,10 +62,13 @@ public class JwtTokenProvider {
         try {
             Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
         } catch (ExpiredJwtException e) {
+            log.error("JWT expired: {}", e.getMessage());  //
             throw new BusinessException(ErrorCode.JWT_EXPIRED, e);
         } catch (UnsupportedJwtException e) {
+            log.error("JWT unsupported: {}", e.getMessage());  //
             throw new BusinessException(ErrorCode.JWT_UNSUPPORTED, e);
         } catch (JwtException | IllegalArgumentException e) {
+            log.error("JWT invalid: {}", e.getMessage());  //
             throw new BusinessException(ErrorCode.JWT_INVALID, e);
         }
     }

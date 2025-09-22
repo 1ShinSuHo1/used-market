@@ -23,7 +23,7 @@ class JwtTokenProviderTest {
         String role = "USER";
 
         // when
-        String token = jwtTokenProvider.createToken(email, role);
+        String token = jwtTokenProvider.createAccessToken(email, role);
 
         // then
         jwtTokenProvider.validateToken(token);
