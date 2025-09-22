@@ -13,5 +13,5 @@ public class GoogleProfileDto {
 
     private String sub;
     private String email;
-    private String email_verified;
+    private boolean email_verified;
 }

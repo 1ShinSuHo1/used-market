@@ -114,6 +114,11 @@ public class User {
         this.address = newAddr;
     }
 
+    public void changeBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+
     // 엔티티 라이프 사이클
     @PrePersist
     void onCreate() {
