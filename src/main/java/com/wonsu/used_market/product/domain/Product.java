@@ -1,5 +1,6 @@
 package com.wonsu.used_market.product.domain;
 
+import com.wonsu.used_market.auction.domain.Auction;
 import com.wonsu.used_market.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -74,6 +75,8 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images = new ArrayList<>();
 
+    @OneToOne(mappedBy = "product",fetch = FetchType.LAZY)
+    private Auction auction;
 
     //생성자 빌더로 필요한 필드만 생성할수 있게 설정
     @Builder
@@ -97,6 +100,11 @@ public class Product {
     public void addImage(ProductImage image) {
         images.add(image);
         image.setProduct(this);
+    }
+
+    //절대 외부에서 직접 호출하지 말기
+    public void assignAuction(Auction auction) {
+        this.auction = auction;
     }
 
     @PrePersist
