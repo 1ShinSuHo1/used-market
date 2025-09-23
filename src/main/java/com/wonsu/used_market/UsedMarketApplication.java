@@ -1,9 +1,12 @@
 package com.wonsu.used_market;
 
+import com.wonsu.used_market.auction.config.QuickBidProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(QuickBidProperties.class)
 public class UsedMarketApplication {
 
 	public static void main(String[] args) {
