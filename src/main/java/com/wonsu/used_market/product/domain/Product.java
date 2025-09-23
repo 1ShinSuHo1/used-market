@@ -102,7 +102,7 @@ public class Product {
         image.setProduct(this);
     }
 
-    //절대 외부에서 직접 호출하지 말기
+    //절대 외부에서 직접 호출하지 말기    
     public void assignAuction(Auction auction) {
         this.auction = auction;
     }
