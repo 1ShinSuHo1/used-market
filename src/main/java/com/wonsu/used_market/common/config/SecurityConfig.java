@@ -49,11 +49,11 @@ public class SecurityConfig {
                 .build();
     }
 
-    // 프론트서버와 맞춰주기 위해서
+    // 프론트와 연결을 위해
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        corsConfiguration.addAllowedOriginPattern("*"); // ngrok을 사용하기위해 설정
         corsConfiguration.setAllowedMethods(Arrays.asList("*")); //모든 HTTP 메서드 허용
         corsConfiguration.setAllowedHeaders(Arrays.asList("*")); //모든 헤더값을 허용
         corsConfiguration.setAllowCredentials(true); //자격증명허용
