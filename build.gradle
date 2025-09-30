@@ -56,3 +56,11 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+sourceSets {
+    main {
+        java {
+            // Querydsl Q타입이 생성되는 기본 경로를 main 소스셋에 포함
+            srcDirs += ["$buildDir/generated/sources/annotationProcessor/java/main"]
+        }
+    }
+}
