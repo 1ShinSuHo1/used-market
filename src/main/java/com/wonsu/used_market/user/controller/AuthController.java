@@ -1,6 +1,7 @@
 package com.wonsu.used_market.user.controller;
 
 
+import com.wonsu.used_market.common.auth.CustomUserDetails;
 import com.wonsu.used_market.common.auth.JwtTokenProvider;
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
@@ -173,11 +174,8 @@ public class AuthController {
 
     //로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@AuthenticationPrincipal UserDetails principal) {
-        String email = principal.getUsername();
-        User user = userService.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
+    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails principal) {
+        User user = principal.getUser();
         refreshTokenService.deleteRefreshToken(user.getId());
 
         return ResponseEntity.ok(Map.of("success", true));
