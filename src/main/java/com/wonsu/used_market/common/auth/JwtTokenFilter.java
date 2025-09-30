@@ -1,6 +1,9 @@
 package com.wonsu.used_market.common.auth;
 
 import com.wonsu.used_market.exception.BusinessException;
+import com.wonsu.used_market.exception.ErrorCode;
+import com.wonsu.used_market.user.domain.User;
+import com.wonsu.used_market.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.*;
@@ -14,22 +17,21 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+
 
 @Component
 public class JwtTokenFilter extends GenericFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
-
-    public JwtTokenFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtTokenFilter(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -48,24 +50,24 @@ public class JwtTokenFilter extends GenericFilter {
                 jwtTokenProvider.validateToken(jwtToken);
 
                 String email = jwtTokenProvider.getEmail(jwtToken);
-                String role = jwtTokenProvider.getRole(jwtToken);
 
+                // DB 조회
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-                // Authentication 객체 생성(인증객체)
-                List<GrantedAuthority> authorities = new ArrayList<>();
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                // CustomUserDetails 생성
+                CustomUserDetails userDetails = new CustomUserDetails(user);
 
-                UserDetails userDetails = new User(email,"",authorities);
-                Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, jwtToken, userDetails.getAuthorities());
+                Authentication authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, jwtToken, userDetails.getAuthorities());
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
             chain.doFilter(request, response);
-        }catch (BusinessException e) {
-
+        } catch (BusinessException e) {
             httpServletResponse.setStatus(e.getErrorCode().getStatus().value());
             httpServletResponse.setContentType("application/json;charset=utf-8");
             httpServletResponse.getWriter().write(e.getErrorCode().getMessage());
-
         } catch (Exception e) {
             httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
             httpServletResponse.setContentType("application/json;charset=utf-8");
@@ -73,3 +75,4 @@ public class JwtTokenFilter extends GenericFilter {
         }
     }
 }
+

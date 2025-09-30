@@ -1,6 +1,7 @@
 package com.wonsu.used_market.user.controller;
 
 
+import com.wonsu.used_market.common.auth.CustomUserDetails;
 import com.wonsu.used_market.common.auth.JwtTokenProvider;
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
@@ -15,6 +16,8 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -128,6 +131,7 @@ public class AuthController {
 
     }
 
+    //토큰 재발급
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody RefreshTokenRequestDto request) {
         String refreshToken = request.getRefreshToken();
@@ -166,6 +170,15 @@ public class AuthController {
         tokens.put("refreshToken", newRefreshToken);
 
         return ResponseEntity.ok(tokens);
+    }
+
+    //로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails principal) {
+        User user = principal.getUser();
+        refreshTokenService.deleteRefreshToken(user.getId());
+
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
 
