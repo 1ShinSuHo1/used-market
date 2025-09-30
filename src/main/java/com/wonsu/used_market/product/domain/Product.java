@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false, length = 20)
     private Category category;
 
+    @Column(length = 40, nullable = false)
+    private String maker;
+
     @Column(name = "model_series", length = 80)
     private String modelSeries; // 기종
 
@@ -44,8 +47,6 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "made_year")
-    private Integer madeYear;
 
     @Column(name = "usage_period")
     private String usagePeriod;
@@ -86,16 +87,30 @@ public class Product {
     @Builder
     private Product(User seller,
                     Category category,
+                    String maker,
                     String title,
                     SaleType saleType,
                     Integer price,
-                    String description) {
+                    String description,
+                    String aiGrade,
+                    String modelSeries,
+                    String modelVariant,
+                    Integer storageGb,
+                    String usagePeriod,
+                    String wishLocation) {
         this.seller = seller;
         this.category = category;
+        this.maker = maker;
         this.title = title;
         this.saleType = saleType;
         this.price = price;
         this.description = description;
+        this.aiGrade = aiGrade;
+        this.modelSeries = modelSeries;
+        this.modelVariant = modelVariant;
+        this.storageGb = storageGb;
+        this.usagePeriod = usagePeriod;
+        this.wishLocation = wishLocation;
         this.status = ProductStatus.ON_SALE;
     }
 
@@ -127,6 +142,12 @@ public class Product {
         this.updatedAt = LocalDateTime.now();
     }
 
+    //엔티티 변경을 위한 메서드
+    // Product.java
+    public void changeTitle(String title) { this.title = title; }
+    public void changeDescription(String description) { this.description = description; }
+    public void changePrice(Integer price) { this.price = price; }
+    public void changeStatus(ProductStatus status) { this.status = status; }
 
 
 
