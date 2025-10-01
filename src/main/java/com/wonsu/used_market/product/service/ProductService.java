@@ -4,6 +4,7 @@ import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.product.domain.Category;
 import com.wonsu.used_market.product.domain.Product;
+import com.wonsu.used_market.product.domain.ProductImage;
 import com.wonsu.used_market.product.domain.SaleType;
 import com.wonsu.used_market.product.dto.*;
 import com.wonsu.used_market.product.repository.ProductRepository;
@@ -63,7 +64,34 @@ public class ProductService {
                 .wishLocation(req.getWishLocation())
                 .build();
 
+
+        // 이미지 등록 (필수: 1개 이상)
+        if (req.getImages() == null || req.getImages().isEmpty()) {
+            throw new BusinessException(ErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        boolean hasThumbnail = false;
+        for (ProductImageRequestDto imgReq : req.getImages()) {
+            ProductImage image = ProductImage.builder()
+                    .imageUrl(imgReq.getImageUrl())
+                    .thumbnail(imgReq.isThumbnail())
+                    .build();
+
+            image.assignTo(product);
+
+            if (imgReq.isThumbnail()) {
+                hasThumbnail = true;
+            }
+        }
+
+        //썸네일이 없는경우
+        // 썸네일 없는 경우 → 첫 번째 이미지를 자동 썸네일로
+        if (!hasThumbnail) {
+            product.getImages().get(0).markAsThumbnail();
+        }
+
         Product savedProduct = productRepository.save(product);
+
         return new CreateProductResponseDto(savedProduct);
 
     }
@@ -71,7 +99,10 @@ public class ProductService {
     //상품 상세 조회
     @Cacheable(value = "productDetail", key = "#productId")
     public ProductDetailResponseDto getProductDetail(Long productId){
-        Product product = productRepository.findById(productId).orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+        Product product = productRepository.findWithImages(productId);
+        if (product == null) {
+            throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
         return new ProductDetailResponseDto(product);
     }
 
@@ -81,11 +112,7 @@ public class ProductService {
             key = "#cond.keyword + '_' + #cond.category + '_' + #cond.status + '_' + #pageable.pageNumber"
     )
     public Page<ProductListResponseDto> getProducts(ProductSearchCond cond, Pageable pageable) {
-        // ProductRepositoryCustom.search() 사용해서 조건 + 페이징 조회
-        Page<Product> products = productRepository.search(cond, pageable);
-
-        // Page안의 요소들을 ProductListResponseDto로 변환해주고 참조
-        return products.map(ProductListResponseDto::new);
+        return productRepository.search(cond, pageable);
     }
 
     //상품 정보 수정(제목,설명,가격,상태만 변경가능으로 설정)

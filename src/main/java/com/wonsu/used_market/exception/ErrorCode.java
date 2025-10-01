@@ -15,6 +15,9 @@ public enum ErrorCode {
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "잘못된 카테고리 값입니다."),
     INVALID_SALETYPE(HttpStatus.BAD_REQUEST, "잘못된 판매 방식 값입니다."),
     NO_PERMISSION(HttpStatus.FORBIDDEN, "해당 상품에 대한 수정 권한이 없습니다."),
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
+    THUMBNAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "썸네일 이미지를 찾을 수 없습니다."),
+    DUPLICATE_THUMBNAIL(HttpStatus.BAD_REQUEST, "상품에는 하나의 썸네일만 지정할 수 있습니다."),
 
     // OAuth 관련
     GOOGLE_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "구글 인증 실패"),

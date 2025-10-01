@@ -1,9 +1,10 @@
 package com.wonsu.used_market.product.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.wonsu.used_market.product.domain.Product;
-import com.wonsu.used_market.product.domain.QProduct;
+import com.wonsu.used_market.product.dto.ProductListResponseDto;
 import com.wonsu.used_market.product.dto.ProductSearchCond;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,18 +15,39 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 import static com.wonsu.used_market.product.domain.QProduct.product;
+import static com.wonsu.used_market.product.domain.QProductImage.productImage;
 
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
 
+    //상품 상세조회를위한 페치조인
     @Override
-    public Page<Product> search(ProductSearchCond cond, Pageable pageable) {
-        QProduct product = QProduct.product;
+    public Product findWithImages(Long productId) {
+        return queryFactory.selectFrom(product)
+                .leftJoin(product.images, productImage).fetchJoin()
+                .where(product.id.eq(productId))
+                .fetchOne();
+    }
 
-        //데이터 조회
-        List<Product> content = queryFactory.selectFrom(product)
+    //상품목록조회 N+1쿼리 문제방지를 위한 쿼리
+    @Override
+    public Page<ProductListResponseDto> search(ProductSearchCond cond, Pageable pageable) {
+        List<ProductListResponseDto> content = queryFactory
+                .select(Projections.constructor(ProductListResponseDto.class,
+                        product.id,
+                        product.title,
+                        product.price,
+                        product.maker,
+                        product.category.stringValue(),
+                        product.aiGrade,
+                        product.createdAt,
+                        productImage.imageUrl
+                ))
+                .from(product)
+                .leftJoin(product.images, productImage)
+                .on(productImage.thumbnail.isTrue())
                 .where(
                         keywordContains(cond.getKeyword()),
                         categoryEq(cond.getCategory()),
@@ -36,7 +58,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
                 .orderBy(product.createdAt.desc())
                 .fetch();
 
-        // 전체 카운트 조회
         Long total = queryFactory
                 .select(product.count())
                 .from(product)
