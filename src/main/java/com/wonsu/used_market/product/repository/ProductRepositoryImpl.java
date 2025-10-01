@@ -4,7 +4,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.wonsu.used_market.product.domain.Product;
-import com.wonsu.used_market.product.domain.QProduct;
 import com.wonsu.used_market.product.dto.ProductListResponseDto;
 import com.wonsu.used_market.product.dto.ProductSearchCond;
 import lombok.RequiredArgsConstructor;

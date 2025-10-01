@@ -37,6 +37,7 @@ public class ProductListResponseDto {
     }
 
     // Projection 전용 생성자
+
     public ProductListResponseDto(Long id, String title, Integer price, String maker,
                                   String category, String aiGrade, LocalDateTime createdAt,
                                   String thumbnailUrl) {
