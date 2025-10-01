@@ -1,6 +1,7 @@
 package com.wonsu.used_market.product.dto;
 
 import com.wonsu.used_market.product.domain.Product;
+import com.wonsu.used_market.product.domain.ProductImage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 public class ProductListResponseDto {
     private Long id;
@@ -29,13 +29,25 @@ public class ProductListResponseDto {
         this.category = product.getCategory().name();
         this.aiGrade = product.getAiGrade();
         this.createdAt = product.getCreatedAt();
-
-        // 썸네일 이미지 (없으면 null)
         this.thumbnailUrl = product.getImages().stream()
-                .filter(img -> img.isThumbnail())   // 썸네일로 지정된 이미지 찾기
+                .filter(ProductImage::isThumbnail)
                 .findFirst()
-                .map(img -> img.getImageUrl())      // 있으면 URL 꺼내기
-                .orElse(null);                      // 없으면 null
+                .map(ProductImage::getImageUrl)
+                .orElse(null);
+    }
+
+    // Projection 전용 생성자
+    public ProductListResponseDto(Long id, String title, Integer price, String maker,
+                                  String category, String aiGrade, LocalDateTime createdAt,
+                                  String thumbnailUrl) {
+        this.id = id;
+        this.title = title;
+        this.price = price;
+        this.maker = maker;
+        this.category = category;
+        this.aiGrade = aiGrade;
+        this.createdAt = createdAt;
+        this.thumbnailUrl = thumbnailUrl;
     }
 
 

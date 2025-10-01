@@ -1,5 +1,7 @@
 package com.wonsu.used_market.common.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +45,14 @@ public class RedisConfig {
     //스프링 캐시 추상화에서 사용하는 캐시 매니저
     @Bean
     public RedisCacheManager cacheManager(LettuceConnectionFactory redisConnectionFactory) {
+        //로컬데이트타임을 쓰기위하여
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+
+
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 //기본 캐시 시간을 10분으로 설정
                 .entryTtl(Duration.ofMinutes(10))
@@ -52,8 +62,7 @@ public class RedisConfig {
                         org.springframework.data.redis.serializer.RedisSerializer.string()))
 
                 // 캐시 밸류를 json으로 직렬화
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                        new GenericJackson2JsonRedisSerializer()));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
         //캐시 이름별 TTL 개별 설정
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();

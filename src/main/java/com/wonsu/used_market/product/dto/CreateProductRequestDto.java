@@ -1,11 +1,14 @@
 package com.wonsu.used_market.product.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -41,4 +44,9 @@ public class CreateProductRequestDto {
 
     //@NotBlank(message = "AI 등급이 필요합니다.")
     private String aiGrade; // AI 판독 결과
+
+    @Valid
+    @NotNull(message = "상품 이미지는 최소 1개 이상 등록해야 합니다.")
+    private List<ProductImageRequestDto> images;
+
 }

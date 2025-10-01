@@ -2,12 +2,12 @@ package com.wonsu.used_market.product.service;
 
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
+import com.wonsu.used_market.product.domain.Category;
 import com.wonsu.used_market.product.domain.Product;
 import com.wonsu.used_market.product.domain.ProductStatus;
-import com.wonsu.used_market.product.dto.CreateProductRequestDto;
-import com.wonsu.used_market.product.dto.CreateProductResponseDto;
-import com.wonsu.used_market.product.dto.UpdateProductRequestDto;
-import com.wonsu.used_market.product.dto.UpdateProductResponseDto;
+import com.wonsu.used_market.product.domain.SaleType;
+import com.wonsu.used_market.product.dto.*;
+import com.wonsu.used_market.product.repository.ProductRepository;
 import com.wonsu.used_market.user.domain.Role;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.repository.UserRepository;
@@ -15,7 +15,10 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -29,7 +32,20 @@ class ProductServiceTest {
     @Autowired
     UserRepository userRepository;
     @Autowired
+    ProductRepository productRepository;
+    @Autowired
     EntityManager em;
+
+    @Autowired
+    StringRedisTemplate redisTemplate;
+
+
+    private List<ProductImageRequestDto> createDummyImages() {
+        return List.of(
+                new ProductImageRequestDto("https://test.com/1.jpg", true),
+                new ProductImageRequestDto("https://test.com/2.jpg", false)
+        );
+    }
 
     @Test
     public void productCreate() throws Exception{
@@ -44,7 +60,8 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "PHONE", "Samsung", "Galaxy", "S21", 128,
-                "테스트 제목", "테스트 설명", "1년", "DIRECT", 100000, "서울", "A"
+                "테스트 제목", "테스트 설명", "1년", "DIRECT", 100000, "서울", "A",
+                createDummyImages()
         );
 
         // when
@@ -71,7 +88,8 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "PHONE", "Apple", "iPhone", "15 Pro", 256,
-                "아이폰15", "좋은폰", "6개월", "DIRECT", 1500000, "서울", "S"
+                "아이폰15", "좋은폰", "6개월", "DIRECT", 1500000, "서울", "S",
+                createDummyImages()
         );
         CreateProductResponseDto created = productService.createProduct(seller, req);
 
@@ -103,7 +121,8 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "TABLET", "LG", "GPad", "Pro", 64,
-                "LG패드", "테스트용", "2년", "DIRECT", 300000, "부산", "B"
+                "LG패드", "테스트용", "2년", "DIRECT", 300000, "부산", "B",
+                createDummyImages()
         );
         CreateProductResponseDto created = productService.createProduct(seller, req);
 
@@ -137,7 +156,8 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "PHONE", "Apple", "iPhone", "13", 128,
-                "아이폰13", "좋은폰", "1년", "DIRECT", 800000, "서울", "B"
+                "아이폰13", "좋은폰", "1년", "DIRECT", 800000, "서울", "B",
+                createDummyImages()
         );
         CreateProductResponseDto created = productService.createProduct(seller, req);
 
@@ -150,4 +170,38 @@ class ProductServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.NO_PERMISSION.getMessage());
     }
+
+    //캐쉬 잘 돌아가는지 테스트
+    @Test
+    void cache_check() throws Exception {
+        // given
+        User seller = User.builder()
+                .email("test@test.com")
+                .nickname("suho")
+                .password("1234")
+                .role(Role.USER)
+                .build();
+
+        userRepository.save(seller);
+
+        Product product = Product.builder()
+                .seller(seller)
+                .title("맥북")
+                .maker("Apple")
+                .price(1000)
+                .category(Category.NOTEBOOK)
+                .saleType(SaleType.DIRECT)
+                .build();
+
+        productRepository.save(product);
+
+        // when
+        productService.getProductDetail(product.getId());
+
+        // then (캐시 저장 확인)
+        String redisKey = "productDetail::" + product.getId();
+        String cached = redisTemplate.opsForValue().get(redisKey);
+        assertThat(cached).isNotNull();
+    }
 }
+

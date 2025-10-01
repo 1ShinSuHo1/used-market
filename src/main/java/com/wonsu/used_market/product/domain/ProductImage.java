@@ -44,4 +44,13 @@ public class ProductImage {
         this.product = product;
         product.addImage(this);
     }
+
+    //썸네일을 바꾸기 위한 메서드들
+    public void markAsThumbnail() {
+        this.thumbnail = true;
+    }
+
+    public void unmarkAsThumbnail() {
+        this.thumbnail = false;
+    }
 }
