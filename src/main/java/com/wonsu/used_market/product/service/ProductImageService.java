@@ -33,6 +33,13 @@ public class ProductImageService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
+        //썸네일중복 방지
+        if(req.isThumbnail()){
+            boolean existsThumbnail = productImageRepository.existsByProductIdAndThumbnailTrue(productId);
+            if (existsThumbnail) {
+                throw new BusinessException(ErrorCode.DUPLICATE_THUMBNAIL);
+            }
+        }
         ProductImage image = ProductImage.builder()
                 .imageUrl(req.getImageUrl())
                 .thumbnail(req.isThumbnail())
@@ -72,11 +79,9 @@ public class ProductImageService {
     }
 
 
-    //상품 이미지 조회
+    //상품 이미지 조회 최적화
     public List<ProductImageResponseDto> getImages(Long productId){
-        return productImageRepository.findByProductId(productId).stream()
-                .map(ProductImageResponseDto::new)
-                .collect(Collectors.toList());
+        return productImageRepository.findDtosByProductId(productId);
     }
 
     public ProductImageResponseDto getThumbnail(Long productId){

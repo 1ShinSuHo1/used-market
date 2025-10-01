@@ -161,4 +161,36 @@ class ProductImageServiceTest {
                 .hasMessageContaining("권한이 없습니다");
     }
 
+
+    //썸네일 중복테스트
+    @Test
+    public void addImage_duplicateThumbnail() throws Exception{
+        // given
+        productImageService.addImage(product.getId(), new ProductImageRequestDto("1.jpg", true));
+
+        // when & then
+        assertThatThrownBy(() ->
+                productImageService.addImage(product.getId(), new ProductImageRequestDto("2.jpg", true))
+        )
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("상품에는 하나의 썸네일만 지정할 수 있습니다.");
+    }
+
+    //썸네일 업데이트 정상적인지
+    @Test
+    public void update_Thumbnail() throws Exception{
+        // given
+        ProductImageResponseDto img1 = productImageService.addImage(product.getId(), new ProductImageRequestDto("1.jpg", true));
+        ProductImageResponseDto img2 = productImageService.addImage(product.getId(), new ProductImageRequestDto("2.jpg", false));
+
+        // when
+        productImageService.updateThumbnail(img2.getId(), seller);
+
+        // then
+        ProductImageResponseDto thumbnail = productImageService.getThumbnail(product.getId());
+        assertThat(thumbnail.getImageUrl()).isEqualTo("2.jpg");
+    }
+
+
+
 }
