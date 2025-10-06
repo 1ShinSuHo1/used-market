@@ -43,7 +43,7 @@ public class SecurityConfig {
                 // 세션방식을 비활성화
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 특정 url 패턴에 대해서는 인증처리(Authentication 객체생성) 제외
-                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login","/auth/refresh").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login","/auth/refresh","/connect/**").permitAll().anyRequest().authenticated())
                 // UsernamePasswordAuthenticationFilter 이클래스에서 폼로그인 인증을 처리
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
