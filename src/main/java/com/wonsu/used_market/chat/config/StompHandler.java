@@ -1,16 +1,16 @@
 package com.wonsu.used_market.chat.config;
 
+import com.wonsu.used_market.chat.domain.ChatRoom;
+import com.wonsu.used_market.chat.repository.ChatParticipantRepository;
+import com.wonsu.used_market.chat.repository.ChatRoomRepository;
 import com.wonsu.used_market.common.auth.CustomUserDetails;
 import com.wonsu.used_market.common.auth.JwtTokenProvider;
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -27,6 +27,8 @@ public class StompHandler implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatParticipantRepository chatParticipantRepository;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -62,6 +64,35 @@ public class StompHandler implements ChannelInterceptor {
             accessor.setUser(authentication);
 
             log.info("STOMP CONNECT 토큰 검증 성공: user={}", email);
+        }
+
+        if (StompCommand.SUBSCRIBE == accessor.getCommand()) {
+            String dest = accessor.getDestination();
+            if (dest != null && dest.startsWith("/topic/")) {
+
+                // Principal null 방어
+                if (accessor.getUser() == null) {
+                    throw new BusinessException(ErrorCode.JWT_INVALID);
+                }
+
+                try {
+                    Long roomId = Long.parseLong(dest.substring("/topic/".length()));
+                    String email = accessor.getUser().getName();
+
+                    User user = userRepository.findByEmail(email)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    ChatRoom room = chatRoomRepository.findById(roomId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+                    boolean participant = chatParticipantRepository.findByChatRoomAndUser(room, user).isPresent();
+                    if (!participant) {
+                        throw new BusinessException(ErrorCode.NO_PERMISSION);
+                    }
+                    log.info("STOMP SUBSCRIBE 허용: user={}, roomId={}", email, roomId);
+                } catch (NumberFormatException e) {
+                    throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                }
+            }
         }
 
         return message;

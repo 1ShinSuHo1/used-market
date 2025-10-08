@@ -2,6 +2,7 @@ package com.wonsu.used_market.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.wonsu.used_market.chat.service.RedisPubSubService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +12,9 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
@@ -73,5 +77,23 @@ public class RedisConfig {
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigs)
                 .build();
+    }
+
+    //"chat" 채널 구독 컨테이너 만들기(Redis에서 pub/sub을 위해 사용)
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(LettuceConnectionFactory redisConnectionFactory, MessageListenerAdapter chatMessageListenerAdapter ) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redisConnectionFactory);
+
+        //채널 구독
+        container.addMessageListener(chatMessageListenerAdapter, new PatternTopic("chat"));
+        return container;
+
+    }
+
+    // 온메시지 바인딩
+    @Bean
+    public MessageListenerAdapter chatMessageListenerAdapter(RedisPubSubService redisPubSubService) {
+        return new MessageListenerAdapter(redisPubSubService, "onMessage");
     }
 }
