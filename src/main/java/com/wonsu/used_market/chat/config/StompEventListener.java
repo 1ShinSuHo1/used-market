@@ -22,16 +22,16 @@ public class StompEventListener {
     @EventListener
     public void connectHandle(SessionConnectEvent event){
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        sessions.add(accessor.getSessionId());
-        log.info("connect sessiond ID" + accessor.getSessionId());
-        log.info("total session : " + sessions.size());
+        String sessionId = accessor.getSessionId();
+        sessions.add(sessionId);
+        log.info("[SESSION] CONNECT: sessionId={} | activeSessions={}", sessionId, sessions.size());
     }
 
     @EventListener
     public void disconnectHandle(SessionDisconnectEvent event){
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        sessions.remove(accessor.getSessionId());
-        log.info("disconnect sessiond ID" + accessor.getSessionId());
-        log.info("total session : " + sessions.size());
+        String sessionId = accessor.getSessionId();
+        sessions.remove(sessionId);
+        log.info("[SESSION] DISCONNECT: sessionId={} | activeSessions={}", sessionId, sessions.size());
     }
 }
