@@ -1,4 +1,4 @@
-package com.wonsu.used_market.chat.config;
+package com.wonsu.used_market.common.websocket;
 
 import com.wonsu.used_market.chat.domain.ChatRoom;
 import com.wonsu.used_market.chat.repository.ChatParticipantRepository;

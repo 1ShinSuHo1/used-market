@@ -13,7 +13,7 @@ import java.security.Principal;
 @Controller
 @Slf4j
 @RequiredArgsConstructor
-public class StompController {
+public class ChatStompController {
 
     private final ChatMessageService chatMessageService;
 

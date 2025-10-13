@@ -48,4 +48,5 @@ public class Bid {
         this.bidder = bidder;
         this.auction = auction;
     }
+
 }
