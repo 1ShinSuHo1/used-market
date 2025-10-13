@@ -1,6 +1,6 @@
 package com.wonsu.used_market.auction.dto;
 
-import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
