@@ -1,5 +1,6 @@
 package com.wonsu.used_market.auction.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

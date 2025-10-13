@@ -8,6 +8,7 @@ import com.wonsu.used_market.chat.repository.ChatMessageRepository;
 import com.wonsu.used_market.chat.repository.ChatParticipantRepository;
 import com.wonsu.used_market.chat.repository.ChatRoomRepository;
 import com.wonsu.used_market.chat.repository.ReadStatusRepository;
+import com.wonsu.used_market.common.websocket.RedisPubSubService;
 import com.wonsu.used_market.product.domain.Category;
 import com.wonsu.used_market.product.domain.Product;
 import com.wonsu.used_market.product.domain.SaleType;
@@ -26,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional

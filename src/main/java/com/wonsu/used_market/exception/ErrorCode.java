@@ -30,6 +30,7 @@ public enum ErrorCode {
     INVALID_AUCTION_TIME(HttpStatus.BAD_REQUEST, "경매 시작/종료 시간이 올바르지 않습니다."),
     INVALID_BID_AMOUNT(HttpStatus.BAD_REQUEST, "입찰 금액이 유효하지 않습니다."),
     INVALID_BID_UNIT(HttpStatus.BAD_REQUEST, "입찰 금액 단위가 올바르지 않습니다."),
+    BID_TOO_LOW(HttpStatus.BAD_REQUEST,  "입찰 금액이 너무 낮습니다."),
     CANNOT_CANCEL_WITH_BIDS(HttpStatus.BAD_REQUEST, "입찰자가 있어 경매를 취소할 수 없습니다."),// 경매 관련
 
     // 채팅 관련

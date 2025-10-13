@@ -1,18 +1,16 @@
 package com.wonsu.used_market.auction.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-//클라이언트에서 서버로 옥션아이디를 안줄수도있기에 세터 설정
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlaceFreeBidRequestDto {
+//클라이언트와 서버간의 입찰메시지
+public class AuctionBidMessage {
 
     private Long auctionId;
+    private String bidder;
     private int bidAmount;
 }
