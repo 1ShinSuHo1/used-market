@@ -1,5 +1,8 @@
 package com.wonsu.used_market.auction.domain;
 
+import com.wonsu.used_market.bid.domain.Bid;
+import com.wonsu.used_market.exception.BusinessException;
+import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.product.domain.Product;
 import com.wonsu.used_market.user.domain.User;
 import jakarta.persistence.*;
@@ -9,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -46,6 +51,10 @@ public class Auction {
     @Column(name = "status",nullable = false)
     private AuctionStatus status;
 
+    //입찰내역
+    @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Bid> bids = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -56,18 +65,34 @@ public class Auction {
 
     //연관관계 메서드
     public void assignToProduct(Product product) {
+        if (product == null) {
+            throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
         this.product = product;
         product.assignAuction(this);
     }
 
+    public void addBid(Bid bid) {
+        this.bids.add(bid);
+    }
+
     //자유입찰 사용자가 직접 입력
-    public boolean placeBid(User bidder, int bidAmount) {
-        if (status != AuctionStatus.ACTIVE) return false;
-        if (bidAmount <= currentPrice) return false;
+    public void placeBid(User bidder, int bidAmount) {
+        if (status != AuctionStatus.ACTIVE)
+            throw new BusinessException(ErrorCode.AUCTION_NOT_ACTIVE);
+        if (bidAmount <= currentPrice)
+            throw new BusinessException(ErrorCode.BID_TOO_LOW);
 
         this.currentPrice = bidAmount;
         this.winner = bidder;
-        return true;
+
+        Bid bid = Bid.builder()
+                .bidAmount(bidAmount)
+                .bidder(bidder)
+                .auction(this)
+                .build();
+
+        this.bids.add(bid);
     }
 
 
@@ -78,6 +103,9 @@ public class Auction {
 
     //판매자 취소
     public void cancelAuction() {
+        if (this.status != AuctionStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.AUCTION_NOT_ACTIVE);
+        }
         this.status = AuctionStatus.CANCELED;
     }
 

@@ -9,6 +9,7 @@ import com.wonsu.used_market.chat.repository.ChatMessageRepository;
 import com.wonsu.used_market.chat.repository.ChatParticipantRepository;
 import com.wonsu.used_market.chat.repository.ChatRoomRepository;
 import com.wonsu.used_market.chat.repository.ReadStatusRepository;
+import com.wonsu.used_market.common.websocket.RedisPubSubService;
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.user.domain.User;
