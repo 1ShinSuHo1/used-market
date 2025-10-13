@@ -1,4 +1,4 @@
-package com.wonsu.used_market.chat.config;
+package com.wonsu.used_market.common.websocket;
 
 import lombok.extern.slf4j.Slf4j;
 
