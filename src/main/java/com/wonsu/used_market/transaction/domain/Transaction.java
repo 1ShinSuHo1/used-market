@@ -1,5 +1,7 @@
 package com.wonsu.used_market.transaction.domain;
 
+import com.wonsu.used_market.exception.BusinessException;
+import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.product.domain.Product;
 import com.wonsu.used_market.user.domain.User;
 import jakarta.persistence.*;
@@ -38,6 +40,13 @@ public class Transaction {
     @Column(name = "price_final",nullable = false)
     private Integer priceFinal;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status;
+
+    @Column(name = "chat_room_id")
+    private Long chatRoomId;
+
     // 거래 완료 시점
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
@@ -61,11 +70,38 @@ public class Transaction {
 
 
     @Builder
-    public Transaction(Product product, User buyer, User seller, Integer priceFinal, LocalDateTime completedAt) {
+    public Transaction(Product product, User buyer, User seller,
+                       Integer priceFinal, Long chatRoomId, LocalDateTime completedAt) {
         this.product = product;
         this.buyer = buyer;
         this.seller = seller;
         this.priceFinal = priceFinal;
+        this.chatRoomId = chatRoomId;
+        this.status = TransactionStatus.PENDING;
         this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
+    }
+
+
+    //상태 전환을 위한 메서드
+    public void confirm() {
+        if (this.status != TransactionStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_TRANSACTION_STATE);
+        }
+        this.status = TransactionStatus.CONFIRMED;
+    }
+
+    public void complete() {
+        if (this.status != TransactionStatus.CONFIRMED) {
+            throw new BusinessException(ErrorCode.INVALID_TRANSACTION_STATE);
+        }
+        this.status = TransactionStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void cancel() {
+        if (this.status == TransactionStatus.COMPLETED) {
+            throw new BusinessException(ErrorCode.TRANSACTION_ALREADY_COMPLETED);
+        }
+        this.status = TransactionStatus.CANCELLED;
     }
 }

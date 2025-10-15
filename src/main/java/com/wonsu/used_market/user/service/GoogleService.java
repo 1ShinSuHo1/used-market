@@ -44,7 +44,7 @@ public class GoogleService {
 
            ResponseEntity<AccessTokenDto> response = restClient.post()
                    .uri("https://oauth2.googleapis.com/token")
-                   .header("Content-Type", "application/x-www-form-urlencoded;")
+                   .header("Content-Type", "application/x-www-form-urlencoded")
                    .body(params)
                    // 응답바디값만을 추출
                    .retrieve()
