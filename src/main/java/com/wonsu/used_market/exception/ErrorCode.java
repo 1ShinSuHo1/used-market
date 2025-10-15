@@ -17,10 +17,17 @@ public enum ErrorCode {
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "잘못된 카테고리 값입니다."),
     INVALID_SALETYPE(HttpStatus.BAD_REQUEST, "잘못된 판매 방식 값입니다."),
-    NO_PERMISSION(HttpStatus.FORBIDDEN, "해당 상품에 대한 수정 권한이 없습니다."),
+    NO_PERMISSION(HttpStatus.FORBIDDEN, "해당 권한이 없습니다."),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
     THUMBNAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "썸네일 이미지를 찾을 수 없습니다."),
     DUPLICATE_THUMBNAIL(HttpStatus.BAD_REQUEST, "상품에는 하나의 썸네일만 지정할 수 있습니다."),
+
+    //거래 관련
+    TRANSACTION_NOT_FOUND(HttpStatus.NOT_FOUND, "거래를 찾을 수 없습니다."),
+    TRANSACTION_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 상품에 대한 거래가 존재합니다."),
+    INVALID_TRANSACTION_STATE(HttpStatus.BAD_REQUEST, "잘못된 거래 상태입니다."),
+    TRANSACTION_ALREADY_COMPLETED(HttpStatus.CONFLICT, "이미 완료된 거래입니다."),
+    TRANSACTION_ALREADY_CANCELLED(HttpStatus.CONFLICT, "이미 취소된 거래입니다."),
 
     // 경매관련
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "경매를 찾을 수 없습니다."),
