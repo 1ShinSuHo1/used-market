@@ -24,7 +24,7 @@ public class AuctionStompController {
     public void handleBid(@DestinationVariable Long auctionId, AuctionBidMessage message, Principal principal) {
         if (principal == null) throw new BusinessException(ErrorCode.JWT_INVALID);
 
-        // 스푸핑 방지 – 서버에서 인증된 사용자 이름으로 교체
+        // 스푸핑 방지 – 서버에서 인증된 사용자 이름으로 교체ㄴ
         String bidder = principal.getName();
         auctionStompService.placeBid(auctionId, bidder, message.getBidAmount());
 
