@@ -13,6 +13,15 @@ public enum ErrorCode {
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "로그인에 실패했습니다."),
 
+    // 파일 업로드 관련 예외
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    FILE_STORAGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 저장 중 오류가 발생했습니다."),
+
+    // AI관련
+    AI_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "AI 서버와의 통신 중 오류가 발생했습니다."),
+    AI_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 예측 결과를 처리할 수 없습니다."),
+
+
     // 상품관련
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "잘못된 카테고리 값입니다."),

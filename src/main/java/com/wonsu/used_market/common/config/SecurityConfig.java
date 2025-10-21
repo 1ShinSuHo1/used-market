@@ -7,7 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,8 +29,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder makePassword() {
-        //반환되는 객체를 스프링 빈으로 등록한다
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -43,7 +43,7 @@ public class SecurityConfig {
                 // 세션방식을 비활성화
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 특정 url 패턴에 대해서는 인증처리(Authentication 객체생성) 제외
-                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login","/auth/refresh","/connect/**").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login","/auth/refresh","/connect/**","/uploads/**").permitAll().anyRequest().authenticated())
                 // UsernamePasswordAuthenticationFilter 이클래스에서 폼로그인 인증을 처리
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -42,11 +43,13 @@ public class CreateProductRequestDto {
 
     private String wishLocation;
 
-    //@NotBlank(message = "AI 등급이 필요합니다.")
-    private String aiGrade; // AI 판독 결과
 
     @Valid
     @NotNull(message = "상품 이미지는 최소 1개 이상 등록해야 합니다.")
-    private List<ProductImageRequestDto> images;
+    private List<ProductImageRequestDto> images = new ArrayList<>();
+
+    public void addImage(String imageUrl, boolean thumbnail) {
+        this.images.add(new ProductImageRequestDto(imageUrl, thumbnail));
+    }
 
 }
