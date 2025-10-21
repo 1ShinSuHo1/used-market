@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final AiPredictService aiPredictService;
 
     //상품 등록
     @Transactional
@@ -47,6 +48,16 @@ public class ProductService {
             throw new BusinessException(ErrorCode.INVALID_SALETYPE);
         }
 
+        // 썸네일이 있으면 그걸 ai검증하고 썸네일이 없으면 첫번째 이미지를 ai검증
+        AiPredictService.AiResponse aiResult = req.getImages().stream()
+                .filter(ProductImageRequestDto::isThumbnail)
+                .findFirst()
+                .map(img -> aiPredictService.predict(img.getImageUrl()))
+                .orElseGet(() -> aiPredictService.predict(req.getImages().get(0).getImageUrl()));
+
+        String aiGrade = aiResult.getGrade();
+        Double confidence = aiResult.getConfidence();
+
         //DTO를 엔티티로 변환
         Product product = Product.builder()
                 .seller(seller)
@@ -56,7 +67,7 @@ public class ProductService {
                 .saleType(saleType)
                 .price(req.getPrice())
                 .description(req.getDescription())
-                .aiGrade(req.getAiGrade())
+                .aiGrade(aiGrade)
                 .modelSeries(req.getModelSeries())
                 .modelVariant(req.getModelVariant())
                 .storageGb(req.getStorageGb())
@@ -91,8 +102,7 @@ public class ProductService {
         }
 
         Product savedProduct = productRepository.save(product);
-
-        return new CreateProductResponseDto(savedProduct);
+        return new CreateProductResponseDto(savedProduct, confidence);
 
     }
 
