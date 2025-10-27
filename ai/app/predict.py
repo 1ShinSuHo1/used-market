@@ -14,7 +14,7 @@ import os
 # 1. 기본 설정
 # 현재 이파일의 절대 경로를 구하고 학습해서 저장해둔 모델 파일의 경로를 만든다 그리고 절대경로로 바꾼다
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "../models/mobilenet_quality_confusion.pth")
+MODEL_PATH = os.path.join(BASE_DIR, "../models/mobilenet_quality_v3.pth")
 MODEL_PATH = os.path.abspath(MODEL_PATH)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -44,3 +44,4 @@ __pycache__/
 *.DS_Store
 venv/
 ai/venv/
+uploads/

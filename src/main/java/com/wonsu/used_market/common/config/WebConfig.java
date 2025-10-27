@@ -1,5 +1,6 @@
 package com.wonsu.used_market.common.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -7,10 +8,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    @Value("${app.upload.dir}")
+    private String uploadDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // /uploads/** 요청이 실제 로컬 "uploads/" 폴더로 연결되도록 설정
+        // 업로드 경로가 '/'로 끝나지 않으면 자동으로 추가
+        String path = uploadDir.endsWith("/") ? uploadDir : uploadDir + "/";
+
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations("file:" + path);
     }
+
+
 }
