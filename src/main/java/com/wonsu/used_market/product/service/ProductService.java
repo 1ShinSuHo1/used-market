@@ -19,6 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -121,9 +124,20 @@ public class ProductService {
             value = "productList",
             key = "#cond.keyword + '_' + #cond.category + '_' + #cond.status + '_' + #pageable.pageNumber"
     )
-    public Page<ProductListResponseDto> getProducts(ProductSearchCond cond, Pageable pageable) {
-        return productRepository.search(cond, pageable);
+    public Map<String, Object> getProducts(ProductSearchCond cond, Pageable pageable) {
+        Page<ProductListResponseDto> page = productRepository.search(cond, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", page.getContent());
+        response.put("totalElements", page.getTotalElements());
+        response.put("totalPages", page.getTotalPages());
+        response.put("pageNumber", page.getNumber());
+        response.put("pageSize", page.getSize());
+        return response;
     }
+
+
+
 
     //상품 정보 수정(제목,설명,가격,상태만 변경가능으로 설정)
     @Transactional
