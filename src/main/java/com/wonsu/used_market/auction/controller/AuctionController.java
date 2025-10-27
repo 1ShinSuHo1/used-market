@@ -20,7 +20,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 @RestController
 @RequestMapping("/auctions")
 @RequiredArgsConstructor
-public class AuctionController {
+public class    AuctionController {
 
     private final AuctionService auctionService;
 

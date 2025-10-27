@@ -16,7 +16,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -55,10 +57,10 @@ public class ProductController {
                     : "unknown";
             String fileName = System.currentTimeMillis() + "_" + originalName;
 
-            java.io.File dir = new java.io.File(uploadDir);
+            File dir = new File(uploadDir);
             if (!dir.exists()) dir.mkdirs();
 
-            java.io.File dest = new java.io.File(uploadDir + fileName);
+            File dest = new File(uploadDir + fileName);
             file.transferTo(dest);
 
             String finalUrl = urlPrefix + fileName;
@@ -73,8 +75,8 @@ public class ProductController {
 
     //상품 목록 조회
     @GetMapping
-    public ResponseEntity<Page<ProductListResponseDto>> getProducts(ProductSearchCond cond, Pageable pageable){
-        Page<ProductListResponseDto> products = productService.getProducts(cond, pageable);
+    public ResponseEntity<Map<String, Object>> getProducts(ProductSearchCond cond, Pageable pageable) {
+        Map<String, Object> products = productService.getProducts(cond, pageable);
         return ResponseEntity.ok(products);
     }
 

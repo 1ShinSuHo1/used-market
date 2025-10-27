@@ -36,3 +36,12 @@ out/
 ### VS Code ###
 .vscode/
 /src/main/resources/application.yml
+/ai/data/
+/ai/models/
+*.pth
+__pycache__/
+*.ipynb_checkpoints
+*.DS_Store
+venv/
+ai/venv/
+uploads/
