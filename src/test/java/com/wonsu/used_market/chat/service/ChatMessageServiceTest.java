@@ -104,7 +104,7 @@ class ChatMessageServiceTest {
                 null
         );
         // when
-        ChatMessageResponseDto res = chatMessageService.saveAndSendMessage(room.getId(), req);
+        ChatMessageResponseDto res = chatMessageService.saveAndSendMessage(room.getId(), seller.getEmail(), req);
 
         // then
         assertThat(res.getRoomId()).isEqualTo(room.getId());
@@ -131,7 +131,7 @@ class ChatMessageServiceTest {
                 MessageType.TEXT,
                 null
         );
-        chatMessageService.saveAndSendMessage(room.getId(), req);
+        chatMessageService.saveAndSendMessage(room.getId(), seller.getEmail(), req);
         // when
         chatMessageService.markAllAsRead(room.getId(), buyer.getId());
 
@@ -144,10 +144,17 @@ class ChatMessageServiceTest {
     @Test
     public void getChatHistory() throws Exception{
         // given
-        chatMessageService.saveAndSendMessage(room.getId(),
-                new ChatMessageRequestDto("첫번째", seller.getEmail(), MessageType.TEXT, null));
-        chatMessageService.saveAndSendMessage(room.getId(),
-                new ChatMessageRequestDto("두번째", buyer.getEmail(), MessageType.TEXT, null));
+        chatMessageService.saveAndSendMessage(
+                room.getId(),
+                seller.getEmail(),
+                new ChatMessageRequestDto("첫번째", seller.getEmail(), MessageType.TEXT, null)
+        );
+
+        chatMessageService.saveAndSendMessage(
+                room.getId(),
+                buyer.getEmail(),
+                new ChatMessageRequestDto("두번째", buyer.getEmail(), MessageType.TEXT, null)
+        );
 
         // when
         List<ChatMessageResponseDto> history = chatMessageService.getChatHistory(room.getId());

@@ -35,7 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
-/src/main/resources/application.yml
+src/main/resources/application-local.yml
+
+
+
 /ai/data/
 /ai/models/
 *.pth
@@ -45,3 +48,12 @@ __pycache__/
 venv/
 ai/venv/
 uploads/
+
+kubeconfig
+*.kube
+*.conf
+.kube/
+
+*.log
+logs/
+

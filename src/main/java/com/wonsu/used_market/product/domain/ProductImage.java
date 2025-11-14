@@ -45,6 +45,10 @@ public class ProductImage {
         product.addImage(this);
     }
 
+    public void changeImageUrl(String newUrl) {
+        this.imageUrl = newUrl;
+    }
+
     //썸네일을 바꾸기 위한 메서드들
     public void markAsThumbnail() {
         this.thumbnail = true;
