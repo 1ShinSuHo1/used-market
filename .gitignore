@@ -57,3 +57,5 @@ kubeconfig
 *.log
 logs/
 
+uploads/
+*.DS_Store
