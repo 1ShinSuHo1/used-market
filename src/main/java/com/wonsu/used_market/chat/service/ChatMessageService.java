@@ -15,6 +15,7 @@ import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
@@ -35,15 +37,16 @@ public class ChatMessageService {
 
     //메시지 저장 및 Redis 발행
     @Transactional
-    public ChatMessageResponseDto saveAndSendMessage(Long roomId, ChatMessageRequestDto req) {
-        // 채팅방/보낸유저 조회
+    public ChatMessageResponseDto saveAndSendMessage(Long roomId, String senderEmail, ChatMessageRequestDto req) {
+        // 채팅방 조회
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        User sender = userRepository.findByEmail(req.getSenderEmail())
+        // 사용자 조회
+        User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 해당 방의 참여자인지 권한 체크해주기
+        // 참여자 여부 검증
         boolean participant = chatParticipantRepository.findByChatRoomAndUser(room, sender).isPresent();
         if (!participant) {
             throw new BusinessException(ErrorCode.NO_PERMISSION);
@@ -88,6 +91,8 @@ public class ChatMessageService {
         try {
             String json = objectMapper.writeValueAsString(res);
             redisPubSubService.publish(json);
+            log.debug("[REDIS PUBLISH] roomId={}, sender={}, type={}",
+                    room.getId(), sender.getEmail(), chatMessage.getType());
         } catch (JsonProcessingException e) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }

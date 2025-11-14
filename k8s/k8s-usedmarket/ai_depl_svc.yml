@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usedmarket-ai
+  namespace: suho
+spec:
+  revisionHistoryLimit: 2
+  replicas: 1
+  selector:
+    matchLabels:
+      app: usedmarket-ai
+  template:
+    metadata:
+      labels:
+        app: usedmarket-ai
+    spec:
+      containers:
+        - name: usedmarket-ai
+          image: 371293081109.dkr.ecr.ap-northeast-2.amazonaws.com/usedmarket-ai:latest
+          ports:
+            - containerPort: 8000
+
+          # AI 모델 CPU예측 기준 적정 자원 배치
+          resources:
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+            requests:
+              cpu: "0.3"
+              memory: "1Gi"
+
+          # 헬스체크 (FastAPI /health)
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: usedmarket-ai-service
+  namespace: suho
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000        # 서비스 포트
+      targetPort: 8000 # FastAPI 앱 포트
+  selector:
+    app: usedmarket-ai

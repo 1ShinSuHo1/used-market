@@ -60,7 +60,7 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "PHONE", "Samsung", "Galaxy", "S21", 128,
-                "테스트 제목", "테스트 설명", "1년", "DIRECT", 100000, "서울", "A",
+                "테스트 제목", "테스트 설명", "1년", "DIRECT", 100000, "서울",
                 createDummyImages()
         );
 
@@ -88,7 +88,7 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "PHONE", "Apple", "iPhone", "15 Pro", 256,
-                "아이폰15", "좋은폰", "6개월", "DIRECT", 1500000, "서울", "S",
+                "아이폰15", "좋은폰", "6개월", "DIRECT", 1500000, "서울",
                 createDummyImages()
         );
         CreateProductResponseDto created = productService.createProduct(seller, req);
@@ -121,7 +121,7 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "TABLET", "LG", "GPad", "Pro", 64,
-                "LG패드", "테스트용", "2년", "DIRECT", 300000, "부산", "B",
+                "LG패드", "테스트용", "2년", "DIRECT", 300000, "부산",
                 createDummyImages()
         );
         CreateProductResponseDto created = productService.createProduct(seller, req);
@@ -156,7 +156,7 @@ class ProductServiceTest {
 
         CreateProductRequestDto req = new CreateProductRequestDto(
                 "PHONE", "Apple", "iPhone", "13", 128,
-                "아이폰13", "좋은폰", "1년", "DIRECT", 800000, "서울", "B",
+                "아이폰13", "좋은폰", "1년", "DIRECT", 800000, "서울",
                 createDummyImages()
         );
         CreateProductResponseDto created = productService.createProduct(seller, req);

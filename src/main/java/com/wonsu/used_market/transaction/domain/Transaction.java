@@ -48,7 +48,7 @@ public class Transaction {
     private Long chatRoomId;
 
     // 거래 완료 시점
-    @Column(name = "completed_at", nullable = false)
+    @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)

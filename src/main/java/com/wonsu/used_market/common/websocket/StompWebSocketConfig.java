@@ -1,18 +1,28 @@
 package com.wonsu.used_market.common.websocket;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.converter.DefaultContentTypeResolver;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final StompHandler stompHandler;
     private final StompExceptionHandler stompExceptionHandler;
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     public StompWebSocketConfig(StompHandler stompHandler, StompExceptionHandler stompExceptionHandler) {
         this.stompHandler = stompHandler;
@@ -22,8 +32,7 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/connect")
-                .setAllowedOrigins("*")
-                //http 엔드포인트를 사용할수있게 해주는 설정
+                .setAllowedOriginPatterns(allowedOrigins.split(","))
                 .withSockJS();
 
     }
@@ -54,4 +63,18 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return stompExceptionHandler;
     }
 
+
+
+    //스톰프 페이로드를 json으로 변환하도록 강제
+    @Override
+    public boolean configureMessageConverters(List<MessageConverter> converters) {
+        DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
+        resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
+
+        MappingJackson2MessageConverter jackson = new MappingJackson2MessageConverter();
+        jackson.setContentTypeResolver(resolver);
+        converters.add(jackson);
+
+        return false; // 기존 컨버터도 유지
+    }
 }

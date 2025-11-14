@@ -34,12 +34,19 @@ public class StompHandler implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         final StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
+        // handshake등 명령없는 메시지 무시
+        if (accessor.getCommand() == null) {
+            return message;
+        }
+
         if (StompCommand.CONNECT == accessor.getCommand()) {
             log.info("STOMP CONNECT 요청 - 토큰 검증 시작");
 
             String bearerToken = accessor.getFirstNativeHeader("Authorization");
             if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-                throw new BusinessException(ErrorCode.JWT_INVALID);
+                // handshake 중일 수 있으니 그냥 통과시킴
+                log.warn("STOMP CONNECT 요청 - Authorization 헤더 없음 (handshake 단계일 수 있음)");
+                return message;
             }
 
             String token = bearerToken.substring(7);
