@@ -48,7 +48,7 @@ ai:
   base-url: http://usedmarket-ai-service:8000
 
 cors:
-  allowed-origins: "https://*.usedmarket.shop"
+  allowed-origins: "https://usedmarket.shop,https://www.usedmarket.shop"
 
 oauth:
   google:
