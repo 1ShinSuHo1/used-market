@@ -3,11 +3,13 @@ package com.wonsu.used_market.common.config;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 
 @Component
+@Profile("local")
 @Slf4j
 // 업로드 디렉토리 초기화를 위한 컴포넌트
 public class UploadDirectoryInitializer {

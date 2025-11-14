@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: usedmarket-backend-ingress
+  namespace: suho
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: my-issuer
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - "api.usedmarket.shop"
+    secretName: api-usedmarket-com-tls
+  rules:
+  - host: api.usedmarket.shop
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: usedmarket-backend-service
+            port:
+              number: 80

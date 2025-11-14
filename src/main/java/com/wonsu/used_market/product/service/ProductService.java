@@ -1,5 +1,7 @@
 package com.wonsu.used_market.product.service;
 
+import com.wonsu.used_market.common.upload.FileUploader;
+
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.product.domain.Category;
@@ -11,6 +13,7 @@ import com.wonsu.used_market.product.repository.ProductRepository;
 import com.wonsu.used_market.user.domain.Role;
 import com.wonsu.used_market.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -20,15 +23,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final AiPredictService aiPredictService;
+    private final FileUploader fileUploader;
 
     //상품 등록
     @Transactional
@@ -50,6 +56,8 @@ public class ProductService {
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_SALETYPE);
         }
+
+
 
         // 썸네일이 있으면 그걸 ai검증하고 썸네일이 없으면 첫번째 이미지를 ai검증
         AiPredictService.AiResponse aiResult = req.getImages().stream()
@@ -85,6 +93,8 @@ public class ProductService {
         }
 
         boolean hasThumbnail = false;
+
+        // ProductImage 엔티티 생성 (현재는 temp URL or 외부 URL)
         for (ProductImageRequestDto imgReq : req.getImages()) {
             ProductImage image = ProductImage.builder()
                     .imageUrl(imgReq.getImageUrl())
@@ -105,6 +115,25 @@ public class ProductService {
         }
 
         Product savedProduct = productRepository.save(product);
+
+
+        // TEMP URL → 실제 경로(products/{id}/...) 로 이동 + URL 갱신
+        for (ProductImage image : savedProduct.getImages()) {
+            String url = image.getImageUrl();
+
+            // TEMP 패턴이면 옮긴다 ("/temp/" 포함 여부로 판단)
+            if (url.contains("/temp/")) {
+                try {
+                    String newUrl = fileUploader.moveTempToProduct(url, savedProduct.getId());
+                    image.changeImageUrl(newUrl);
+                    log.info("[이미지 TEMP→PRODUCT 이동] {} -> {}", url, newUrl);
+                } catch (Exception e) {
+                    log.error("[이미지 이동 실패] url={}", url, e);
+                    // 필요하면 예외로 터뜨리거나, 그냥 로그만 찍고 넘어가도됨(선택)
+                }
+            }
+        }
+
         return new CreateProductResponseDto(savedProduct, confidence);
 
     }
@@ -178,6 +207,19 @@ public class ProductService {
         if(!product.getSeller().getId().equals(currentUser.getId())
                 && !currentUser.getRole().equals(Role.ADMIN)){
             throw new BusinessException(ErrorCode.NO_PERMISSION);
+        }
+
+        // 상품이미지 뽑기
+        List<ProductImage> images = product.getImages();
+
+        //s3삭제
+        for (ProductImage img : images) {
+            String url = img.getImageUrl();
+            try {
+                fileUploader.delete(url);
+            } catch (Exception e) {
+                log.error("[S3 삭제 실패] url={}", url);
+            }
         }
 
         productRepository.delete(product);

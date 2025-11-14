@@ -1,6 +1,7 @@
 package com.wonsu.used_market.common.config;
 
 import com.wonsu.used_market.common.auth.JwtTokenFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,11 +18,15 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
     private final JwtTokenFilter jwtTokenFilter;
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     public SecurityConfig(JwtTokenFilter jwtTokenFilter) {
         this.jwtTokenFilter = jwtTokenFilter;
@@ -43,7 +48,7 @@ public class SecurityConfig {
                 // 세션방식을 비활성화
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 특정 url 패턴에 대해서는 인증처리(Authentication 객체생성) 제외
-                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login","/auth/refresh","/connect/**","/uploads/**").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(a -> a.requestMatchers("/auth/register","/auth/login","/auth/oauth/google/login","/auth/oauth/kakao/login","/auth/refresh","/connect/**","/uploads/**","/health").permitAll().anyRequest().authenticated())
                 // UsernamePasswordAuthenticationFilter 이클래스에서 폼로그인 인증을 처리
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -53,7 +58,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOriginPattern("*"); // ngrok을 사용하기위해 설정
+        corsConfiguration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         corsConfiguration.setAllowedMethods(Arrays.asList("*")); //모든 HTTP 메서드 허용
         corsConfiguration.setAllowedHeaders(Arrays.asList("*")); //모든 헤더값을 허용
         corsConfiguration.setAllowCredentials(true); //자격증명허용

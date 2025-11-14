@@ -4,20 +4,14 @@ import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.user.domain.User;
 import com.wonsu.used_market.user.repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -65,14 +59,23 @@ public class JwtTokenFilter extends GenericFilter {
             }
             chain.doFilter(request, response);
         } catch (BusinessException e) {
-            httpServletResponse.setStatus(e.getErrorCode().getStatus().value());
-            httpServletResponse.setContentType("application/json;charset=utf-8");
-            httpServletResponse.getWriter().write(e.getErrorCode().getMessage());
+            handleErrorResponse(httpServletResponse, e.getErrorCode().getStatus().value(), e.getErrorCode().getMessage());
         } catch (Exception e) {
-            httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-            httpServletResponse.setContentType("application/json;charset=utf-8");
-            httpServletResponse.getWriter().write("invalid token");
+            handleErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED.value(), "invalid token");
         }
     }
+
+    // 예외 응답 처리메서드
+    private void handleErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        if (!response.isCommitted()) {
+            //이미 응답이 전송되었는가
+            response.setStatus(status);
+            response.setContentType("application/json;charset=utf-8");
+
+            // 단순 문자열이 아니라 JSON 형식으로 에러 반환
+            response.getWriter().write("{\"error\": \"" + message + "\"}");
+        }
+    }
+
 }
 

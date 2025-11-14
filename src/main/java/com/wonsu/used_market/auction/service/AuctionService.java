@@ -18,17 +18,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class AuctionService {
+
+    private final RedisTemplate<String,Object> redisTemplate;
     private final AuctionRepository auctionRepository;
     private final ProductRepository productRepository;
     private final AuctionProperties auctionProperties;
@@ -62,6 +67,20 @@ public class AuctionService {
 
         auction.assignToProduct(product);
         auctionRepository.save(auction);
+
+        try {
+            // 종료시각까지 남은 시간 + 10분 버퍼
+            long ttlSeconds = Duration.between(LocalDateTime.now(), dto.getEndAt()).getSeconds() + 600;
+            if (ttlSeconds > 0) {
+                String key = "auction:" + auction.getId();
+                redisTemplate.opsForHash().put(key, "currentPrice", dto.getStartPrice());
+                redisTemplate.opsForHash().put(key, "winner", null);
+                redisTemplate.expire(key, Duration.ofSeconds(ttlSeconds));
+                log.info("[AUCTION TTL SET] key={} TTL={}s (≈{}분)", key, ttlSeconds, ttlSeconds / 60);
+            }
+        } catch (Exception e) {
+            log.warn("Redis TTL 설정 실패 (auctionId={})", auction.getId(), e);
+        }
 
         return AuctionResponseDto.from(auction);
 

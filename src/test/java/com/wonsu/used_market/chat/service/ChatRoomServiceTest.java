@@ -20,7 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+
 
 @SpringBootTest
 @Transactional
@@ -107,7 +107,7 @@ class ChatRoomServiceTest {
                 MessageType.TEXT,
                 null
         );
-        chatMessageService.saveAndSendMessage(room.getId(), req);
+        chatMessageService.saveAndSendMessage(room.getId(),seller.getEmail(), req);
         // when
         chatMessageService.markAllAsRead(room.getId(), buyer.getId());
         // then
