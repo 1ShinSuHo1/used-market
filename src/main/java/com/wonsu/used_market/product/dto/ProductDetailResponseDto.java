@@ -23,6 +23,7 @@ public class ProductDetailResponseDto {
     private LocalDateTime createdAt;
 
     private String category;
+    private String saleType;
 
     //상품 세부속성
     private String maker;
@@ -62,7 +63,7 @@ public class ProductDetailResponseDto {
         this.price = product.getPrice();
         this.status = product.getStatus().name();
         this.createdAt = product.getCreatedAt();
-
+        this.saleType = product.getSaleType().name();
 
         this.category = product.getCategory().name();
 

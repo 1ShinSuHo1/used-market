@@ -14,6 +14,7 @@ public class CreateProductResponseDto {
     private Long id;
     private Long sellerId;
     private String status;
+    private String saleType;
     private List<ProductImageResponseDto> images;
     private String aiGrade;
     private Double confidence;
@@ -22,6 +23,7 @@ public class CreateProductResponseDto {
         this.id = product.getId();
         this.sellerId = product.getSeller().getId();
         this.status = product.getStatus().name();
+        this.saleType = product.getSaleType().name();
         this.aiGrade = product.getAiGrade();
         this.confidence = confidence;
         this.images = product.getImages().stream()
