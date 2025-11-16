@@ -3,8 +3,6 @@ package com.wonsu.used_market.common.websocket;
 import com.wonsu.used_market.chat.domain.ChatRoom;
 import com.wonsu.used_market.chat.repository.ChatParticipantRepository;
 import com.wonsu.used_market.chat.repository.ChatRoomRepository;
-import com.wonsu.used_market.common.auth.CustomUserDetails;
-import com.wonsu.used_market.common.auth.JwtTokenProvider;
 import com.wonsu.used_market.exception.BusinessException;
 import com.wonsu.used_market.exception.ErrorCode;
 import com.wonsu.used_market.user.domain.User;
@@ -16,8 +14,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,7 +21,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class StompHandler implements ChannelInterceptor {
 
-    private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
@@ -35,140 +30,64 @@ public class StompHandler implements ChannelInterceptor {
 
         long now = System.currentTimeMillis();
 
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        if (accessor.getCommand() == null) {
+            return message;
+        }
+
+        log.info("─────────────── [STOMP preSend {}] cmd={} dest={} session={} user={} ───────────────",
+                now, accessor.getCommand(), accessor.getDestination(), accessor.getSessionId(), accessor.getUser());
+
         try {
-            log.info("─────────────── [STOMP preSend START {}] ───────────────", now);
-
-            StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-            if (accessor.getCommand() == null) {
-                log.info("[NO COMMAND] message bypass");
-                return message;
-            }
-
-            log.info("[COMMAND] {}", accessor.getCommand());
-            log.info("[HEADERS] {}", accessor.toNativeHeaderMap());
-            log.info("[DESTINATION] {}", accessor.getDestination());
-            log.info("[SESSION ID] {}", accessor.getSessionId());
-            log.info("[USER] {}", accessor.getUser());
-
             return handle(message, accessor);
-
-        } catch (Exception ex) {
-            log.error("🔥🔥 [STOMP ERROR at {}] – Full Stacktrace:", now, ex);
-            throw ex;
         } finally {
-            log.info("─────────────── [STOMP preSend END   {}] ───────────────", now);
+            log.info("─────────────── [STOMP preSend END {}] ───────────────", now);
         }
     }
 
     private Message<?> handle(Message<?> message, StompHeaderAccessor accessor) {
-
         StompCommand cmd = accessor.getCommand();
 
         switch (cmd) {
-
-            case CONNECT:
-                return onConnect(message, accessor);
-
-            case SUBSCRIBE:
-                return onSubscribe(message, accessor);
-
-            case SEND:
-                log.info("[SEND] 메시지 전송 요청");
+            case CONNECT -> {
+                // ✅ Handshake에서 이미 Principal 세팅 끝남
+                log.info("[CONNECT] session={} user={}", accessor.getSessionId(), accessor.getUser());
                 return message;
-
-            case DISCONNECT:
-                log.info("[DISCONNECT] 클라이언트가 연결 종료 요청");
-                return message;
-        }
-
-        return message;
-    }
-
-    private Message<?> onConnect(Message<?> message, StompHeaderAccessor accessor) {
-
-        log.info("🔵 CONNECT 핸들러 진입");
-
-        String bearer = accessor.getFirstNativeHeader("Authorization");
-        log.info("[CONNECT] Authorization 헤더 = {}", bearer);
-
-        if (bearer == null || !bearer.startsWith("Bearer ")) {
-            log.warn("[CONNECT] Authorization 없음 → handshake 단계일 가능성 → 통과");
-            return message;
-        }
-
-        String token = bearer.substring(7);
-        log.info("[CONNECT] 추출된 JWT = {}", token);
-
-        jwtTokenProvider.validateToken(token);
-
-        String email = jwtTokenProvider.getEmail(token);
-        log.info("[CONNECT] JWT 이메일 = {}", email);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        CustomUserDetails userDetails = new CustomUserDetails(user);
-
-        Authentication auth =
-                new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
-
-        accessor.setUser(auth);
-
-        log.info("🟢 CONNECT 완료: user={}, session={}", email, accessor.getSessionId());
-        return message;
-    }
-
-    private Message<?> onSubscribe(Message<?> message, StompHeaderAccessor accessor) {
-
-        log.info("🟡 SUBSCRIBE 요청 dest = {}", accessor.getDestination());
-
-        // 🔥 1) SUBSCRIBE 프레임에서도 Authorization 헤더 확인 후 JWT 재검증
-        String bearer = accessor.getFirstNativeHeader("Authorization");
-        log.info("[SUBSCRIBE] Authorization 헤더 = {}", bearer);
-
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            String token = bearer.substring(7);
-            log.info("[SUBSCRIBE] JWT = {}", token);
-
-            jwtTokenProvider.validateToken(token);
-            String email = jwtTokenProvider.getEmail(token);
-            log.info("[SUBSCRIBE] JWT 이메일 = {}", email);
-
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-            CustomUserDetails userDetails = new CustomUserDetails(user);
-
-            Authentication auth =
-                    new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
-
-            // 🔥 여기서 Principal 복원
-            accessor.setUser(auth);
-
-            log.info("[SUBSCRIBE] Principal 재설정 완료 user={}", email);
-        }
-
-        String dest = accessor.getDestination();
-        if (dest == null) return message;
-
-        // 🔥 2) 채팅 구독 처리
-        if (dest.startsWith("/topic/chat/")) {
-
-            log.info("[SUBSCRIBE] Chat Subscribe 로직 실행");
-
-            if (accessor.getUser() == null) {
-                log.error("[SUBSCRIBE] User null → JWT 상실");
-                throw new BusinessException(ErrorCode.JWT_INVALID);
             }
+            case SUBSCRIBE -> {
+                handleSubscribe(accessor);
+                return message;
+            }
+            case SEND -> {
+                handleSend(accessor);
+                return message;
+            }
+            case DISCONNECT -> {
+                log.info("[DISCONNECT] session={}", accessor.getSessionId());
+                return message;
+            }
+            default -> {
+                return message;
+            }
+        }
+    }
 
+    private void handleSubscribe(StompHeaderAccessor accessor) {
+        String dest = accessor.getDestination();
+        log.info("🟡 SUBSCRIBE dest={}", dest);
+
+        if (dest == null) return;
+
+        if (accessor.getUser() == null) {
+            throw new BusinessException(ErrorCode.JWT_INVALID); // 사실상 "인증 안 된 WebSocket"
+        }
+
+        // /topic/chat/{roomId} 구독 시 방 참여자 검증
+        if (dest.startsWith("/topic/chat/")) {
             String roomIdStr = dest.substring("/topic/chat/".length());
-            log.info("[SUBSCRIBE] Parsed roomId = {}", roomIdStr);
-
             Long roomId = Long.parseLong(roomIdStr);
 
-            String email = accessor.getUser().getName();
-            log.info("[SUBSCRIBE] email from Principal = {}", email);
-
+            String email = accessor.getUser().getName(); // Authentication.getName() == username(email)
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -176,22 +95,47 @@ public class StompHandler implements ChannelInterceptor {
                     .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
             boolean ok = chatParticipantRepository.findByChatRoomAndUser(room, user).isPresent();
-            log.info("[SUBSCRIBE] room participant = {}", ok);
+            log.info("[SUBSCRIBE] room={}, user={}, participant={}", roomId, email, ok);
 
-            if (!ok) throw new BusinessException(ErrorCode.NO_PERMISSION);
-
-            log.info("🟢 SUBSCRIBE 완료: user={}, room={}", email, roomId);
-            return message;
+            if (!ok) {
+                throw new BusinessException(ErrorCode.NO_PERMISSION);
+            }
         }
 
-        // 경매 채널
+        // /topic/auction/** 는 자유 구독
         if (dest.startsWith("/topic/auction/")) {
             log.info("[SUBSCRIBE] Auction 채널 → unrestricted");
-            return message;
         }
-
-        log.info("[SUBSCRIBE] 기타 구독 → 통과");
-        return message;
     }
 
+    private void handleSend(StompHeaderAccessor accessor) {
+        String dest = accessor.getDestination();
+        log.info("🟠 SEND dest={}", dest);
+
+        if (dest == null) return;
+
+        if (accessor.getUser() == null) {
+            throw new BusinessException(ErrorCode.JWT_INVALID);
+        }
+
+        // /publish/{roomId} 를 통한 채팅 메시지 전송 시 방 참여자 검증
+        if (dest.startsWith("/publish/")) {
+            String roomIdStr = dest.substring("/publish/".length());
+            Long roomId = Long.parseLong(roomIdStr);
+
+            String email = accessor.getUser().getName();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            ChatRoom room = chatRoomRepository.findById(roomId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+            boolean ok = chatParticipantRepository.findByChatRoomAndUser(room, user).isPresent();
+            log.info("[SEND] room={}, user={}, participant={}", roomId, email, ok);
+
+            if (!ok) {
+                throw new BusinessException(ErrorCode.NO_PERMISSION);
+            }
+        }
+    }
 }
