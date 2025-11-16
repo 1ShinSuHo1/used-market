@@ -12,6 +12,7 @@ import com.wonsu.used_market.product.domain.ProductImage;
 import com.wonsu.used_market.product.domain.SaleType;
 import com.wonsu.used_market.product.dto.*;
 import com.wonsu.used_market.product.repository.ProductRepository;
+import com.wonsu.used_market.transaction.repository.TransactionRepository;
 import com.wonsu.used_market.user.domain.Role;
 import com.wonsu.used_market.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class ProductService {
     private final AiPredictService aiPredictService;
     private final FileUploader fileUploader;
     private final AuctionService auctionService;
+    private final TransactionRepository transactionRepository;
 
     //상품 등록
     @Transactional
@@ -222,6 +224,12 @@ public class ProductService {
         if(!product.getSeller().getId().equals(currentUser.getId())
                 && !currentUser.getRole().equals(Role.ADMIN)){
             throw new BusinessException(ErrorCode.NO_PERMISSION);
+        }
+        if (transactionRepository.existsByProductId(productId)) {
+            throw new BusinessException(ErrorCode.CANNOT_DELETE_PRODUCT_WITH_TRANSACTION);
+        }
+        if (product.getAuction() != null && product.getAuction().getStatus().isActive()) {
+            throw new BusinessException(ErrorCode.CANNOT_DELETE_PRODUCT_WITH_ACTIVE_AUCTION);
         }
 
         // 상품이미지 뽑기

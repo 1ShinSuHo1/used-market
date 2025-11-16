@@ -192,6 +192,10 @@ public class AuctionService {
     public Auction createAuctionForProduct(Product product,
                                            Integer auctionStartPrice,
                                            LocalDateTime auctionEndAt) {
+        log.error("=== DEBUG AUCTION TIME ===");
+        log.error("Raw auctionEndAt = {}", auctionEndAt);
+        log.error("Now(KST) = {}", LocalDateTime.now());
+
 
         if (auctionEndAt == null || !auctionEndAt.isAfter(LocalDateTime.now())) {
             throw new BusinessException(ErrorCode.INVALID_AUCTION_TIME);

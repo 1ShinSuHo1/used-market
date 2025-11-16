@@ -17,6 +17,9 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
     FILE_STORAGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 저장 중 오류가 발생했습니다."),
 
+    CANNOT_DELETE_PRODUCT_WITH_TRANSACTION(HttpStatus.BAD_REQUEST, "거래가 진행된 상품은 삭제할 수 없습니다."),
+    CANNOT_DELETE_PRODUCT_WITH_ACTIVE_AUCTION(HttpStatus.BAD_REQUEST, "진행 중인 경매가 있어 상품을 삭제할 수 없습니다."),
+
     // AI관련
     AI_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "AI 서버와의 통신 중 오류가 발생했습니다."),
     AI_PREDICTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 예측 결과를 처리할 수 없습니다."),
