@@ -6,6 +6,7 @@ import com.wonsu.used_market.common.websocket.RedisChannels;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -16,6 +17,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class AuctionStompService {
     //Redis에 데이터저장용
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
     //Stomp를 통해 입찰요청이 들어오면 실행되는데
@@ -37,13 +40,13 @@ public class AuctionStompService {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
-                        redisTemplate.convertAndSend(RedisChannels.AUCTION, json);
+                        stringRedisTemplate.convertAndSend(RedisChannels.AUCTION, json);
                         log.info("[AUCTION PUB - AFTER COMMIT] {}", json);
                     }
                 });
             } else {
                 // 트랜잭션이 없는 상황(비동기 호출/테스트 등)
-                redisTemplate.convertAndSend(RedisChannels.AUCTION, json);
+                stringRedisTemplate.convertAndSend(RedisChannels.AUCTION, json);
                 log.info("[AUCTION PUB - NO TX] {}", json);
             }
 

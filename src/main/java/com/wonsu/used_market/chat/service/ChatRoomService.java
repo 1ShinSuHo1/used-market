@@ -121,7 +121,7 @@ public class ChatRoomService {
         );
     }
 
-    //거래 완료후에 자동 채팅방 생성
+    //거래 성사 또는 경매 낙찰시 자동생성되는 사후 거래 채팅방 생성
     @Transactional
     public ChatRoomCreateResponseDto createAfterTradeRoom(Transaction transaction){
         Product product = transaction.getProduct();

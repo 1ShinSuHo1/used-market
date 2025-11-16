@@ -17,9 +17,10 @@ spring:
       ddl-auto: create
     properties:
       hibernate:
-        show_sql: true
+        show_sql: false
         format_sql: false
         dialect: org.hibernate.dialect.MySQL8Dialect
+
 
   data:
     redis:
@@ -77,3 +78,8 @@ cloud:
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID}
       secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

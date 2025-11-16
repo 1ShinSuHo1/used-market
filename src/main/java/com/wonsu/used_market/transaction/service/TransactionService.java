@@ -55,7 +55,7 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        chatRoomService.createAfterTradeRoom(transaction);
+
         log.info("[TRANSACTION REQUESTED] productId={}, buyer={}, seller={}, chatRoom={}",
                 productId, buyer.getNickname(), seller.getNickname(), chatRoomId);
 
@@ -75,6 +75,8 @@ public class TransactionService {
         }
 
         tx.confirm();
+
+        chatRoomService.createAfterTradeRoom(tx);
         log.info("[TRANSACTION ACCEPTED] id={}, seller={}", tx.getId(), seller.getNickname());
         return TransactionResponseDto.from(tx);
     }
