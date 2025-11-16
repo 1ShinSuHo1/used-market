@@ -120,12 +120,38 @@ public class StompHandler implements ChannelInterceptor {
 
     private Message<?> onSubscribe(Message<?> message, StompHeaderAccessor accessor) {
 
-        String dest = accessor.getDestination();
-        log.info("🟡 SUBSCRIBE 요청 dest = {}", dest);
+        log.info("🟡 SUBSCRIBE 요청 dest = {}", accessor.getDestination());
 
+        // 🔥 1) SUBSCRIBE 프레임에서도 Authorization 헤더 확인 후 JWT 재검증
+        String bearer = accessor.getFirstNativeHeader("Authorization");
+        log.info("[SUBSCRIBE] Authorization 헤더 = {}", bearer);
+
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            String token = bearer.substring(7);
+            log.info("[SUBSCRIBE] JWT = {}", token);
+
+            jwtTokenProvider.validateToken(token);
+            String email = jwtTokenProvider.getEmail(token);
+            log.info("[SUBSCRIBE] JWT 이메일 = {}", email);
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            CustomUserDetails userDetails = new CustomUserDetails(user);
+
+            Authentication auth =
+                    new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
+
+            // 🔥 여기서 Principal 복원
+            accessor.setUser(auth);
+
+            log.info("[SUBSCRIBE] Principal 재설정 완료 user={}", email);
+        }
+
+        String dest = accessor.getDestination();
         if (dest == null) return message;
 
-        // 채팅 구독
+        // 🔥 2) 채팅 구독 처리
         if (dest.startsWith("/topic/chat/")) {
 
             log.info("[SUBSCRIBE] Chat Subscribe 로직 실행");
@@ -158,7 +184,7 @@ public class StompHandler implements ChannelInterceptor {
             return message;
         }
 
-        // 경매 구독
+        // 경매 채널
         if (dest.startsWith("/topic/auction/")) {
             log.info("[SUBSCRIBE] Auction 채널 → unrestricted");
             return message;
@@ -167,4 +193,5 @@ public class StompHandler implements ChannelInterceptor {
         log.info("[SUBSCRIBE] 기타 구독 → 통과");
         return message;
     }
+
 }
