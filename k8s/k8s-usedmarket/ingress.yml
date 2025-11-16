@@ -6,6 +6,13 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: my-issuer
+
+    # 🔻 WebSocket / STOMP 안정화를 위한 설정들
+    nginx.ingress.kubernetes.io/websocket-services: "usedmarket-backend-service"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+
 spec:
   ingressClassName: nginx
   tls:
