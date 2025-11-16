@@ -1,5 +1,7 @@
 package com.wonsu.used_market.product.service;
 
+
+import com.wonsu.used_market.auction.service.AuctionService;
 import com.wonsu.used_market.common.upload.FileUploader;
 
 import com.wonsu.used_market.exception.BusinessException;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final AiPredictService aiPredictService;
     private final FileUploader fileUploader;
+    private final AuctionService auctionService;
 
     //상품 등록
     @Transactional
@@ -134,6 +138,17 @@ public class ProductService {
             }
         }
 
+        if (saleType == SaleType.AUCTION) {
+            // 여기선 그냥 경매 생성 요청만 넘김 (검증 + TTL은 AuctionService에서)
+            auctionService.createAuctionForProduct(
+                    savedProduct,
+                    req.getAuctionStartPrice(),
+                    req.getAuctionEndAt()
+            );
+        }
+
+
+
         return new CreateProductResponseDto(savedProduct, confidence);
 
     }
@@ -141,7 +156,7 @@ public class ProductService {
     //상품 상세 조회
     @Cacheable(value = "productDetail", key = "#productId")
     public ProductDetailResponseDto getProductDetail(Long productId){
-        Product product = productRepository.findWithImages(productId);
+        Product product = productRepository.findWithImagesAndAuction(productId);
         if (product == null) {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }

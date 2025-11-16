@@ -36,9 +36,14 @@ public class ChatController {
 
     //특정 방의 메시지 조회 asc로 정렬하였음
     @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<List<ChatMessageResponseDto>> getRoomMessages(@PathVariable Long roomId, Principal principal) {
+    public ResponseEntity<List<ChatMessageResponseDto>> getRoomMessages(
+            @PathVariable Long roomId, Principal principal) {
+
         if (principal == null) throw new BusinessException(ErrorCode.JWT_INVALID);
-        return ResponseEntity.ok(chatMessageService.getChatHistory(roomId));
+
+        String email = principal.getName();
+
+        return ResponseEntity.ok(chatMessageService.getChatHistory(roomId, email));
     }
 
     //해당방의 안읽은 메시지 전체읽음 처리

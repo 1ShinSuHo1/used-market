@@ -71,6 +71,16 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
+    //이미지 경매까지 한번에 페치조인
+    @Override
+    public Product findWithImagesAndAuction(Long productId) {
+        return queryFactory.selectFrom(product)
+                .leftJoin(product.images, productImage).fetchJoin()
+                .leftJoin(product.auction).fetchJoin()
+                .where(product.id.eq(productId))
+                .fetchOne();
+    }
+
     // 동적 조건 메서드(null 자동무시를 위해 설정)
     private BooleanExpression keywordContains(String keyword) {
         return StringUtils.hasText(keyword) ? product.title.containsIgnoreCase(keyword) : null;

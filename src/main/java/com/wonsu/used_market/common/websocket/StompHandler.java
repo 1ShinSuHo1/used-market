@@ -71,36 +71,46 @@ public class StompHandler implements ChannelInterceptor {
             accessor.setUser(authentication);
 
             log.info("STOMP CONNECT 토큰 검증 성공: user={}", email);
+            return message;
         }
 
         if (StompCommand.SUBSCRIBE == accessor.getCommand()) {
             String dest = accessor.getDestination();
-            if (dest != null && dest.startsWith("/topic/")) {
+            if (dest == null) return message;
 
-                // Principal null 방어
+            // 채팅 구독: /topic/chat/{roomId}
+            if (dest.startsWith("/topic/chat/")) {
+
                 if (accessor.getUser() == null) {
                     throw new BusinessException(ErrorCode.JWT_INVALID);
                 }
 
-                try {
-                    Long roomId = Long.parseLong(dest.substring("/topic/".length()));
-                    String email = accessor.getUser().getName();
+                String roomIdStr = dest.substring("/topic/chat/".length());
+                Long roomId = Long.parseLong(roomIdStr);
 
-                    User user = userRepository.findByEmail(email)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    ChatRoom room = chatRoomRepository.findById(roomId)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+                String email = accessor.getUser().getName();
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-                    boolean participant = chatParticipantRepository.findByChatRoomAndUser(room, user).isPresent();
-                    if (!participant) {
-                        throw new BusinessException(ErrorCode.NO_PERMISSION);
-                    }
-                    log.info("STOMP SUBSCRIBE 허용: user={}, roomId={}", email, roomId);
-                } catch (NumberFormatException e) {
-                    throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                ChatRoom room = chatRoomRepository.findById(roomId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+                boolean participant = chatParticipantRepository.findByChatRoomAndUser(room, user).isPresent();
+                if (!participant) {
+                    throw new BusinessException(ErrorCode.NO_PERMISSION);
                 }
+
+                return message;
+            }
+
+            // 경매 구독: /topic/auction/{auctionId}
+            if (dest.startsWith("/topic/auction/")) {
+                // 경매 구독은 인증만 되어 있으면 모두 허용 (비공개 채널이 아님)
+                return message;
             }
         }
+
+
 
         return message;
     }

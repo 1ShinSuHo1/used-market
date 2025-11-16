@@ -51,10 +51,11 @@ public class TransactionService {
                 .seller(seller)
                 .priceFinal(product.getPrice())
                 .chatRoomId(chatRoomId)
-                .completedAt(LocalDateTime.now())
                 .build();
 
         transactionRepository.save(transaction);
+
+        chatRoomService.createAfterTradeRoom(transaction);
         log.info("[TRANSACTION REQUESTED] productId={}, buyer={}, seller={}, chatRoom={}",
                 productId, buyer.getNickname(), seller.getNickname(), chatRoomId);
 
@@ -107,7 +108,6 @@ public class TransactionService {
                 .buyer(buyer)
                 .seller(seller)
                 .priceFinal(priceFinal)
-                .completedAt(LocalDateTime.now())
                 .build();
 
         transactionRepository.save(transaction);

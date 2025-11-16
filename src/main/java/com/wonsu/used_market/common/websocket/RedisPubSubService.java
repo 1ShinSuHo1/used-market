@@ -43,7 +43,7 @@ public class RedisPubSubService implements MessageListener {
                 ChatMessageResponseDto dto = objectMapper.readValue(payload, ChatMessageResponseDto.class);
 
                 // 구독자에게 전송 (/topic/{roomId})
-                messaging.convertAndSend("/topic/" + dto.getRoomId(), dto);
+                messaging.convertAndSend("/topic/chat/" + dto.getRoomId(), dto);
 
                 log.debug("[CHAT PUBSUB] roomId={}, sender={}", dto.getRoomId(), dto.getSenderNickname());
             }

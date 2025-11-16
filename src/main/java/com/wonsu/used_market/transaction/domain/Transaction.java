@@ -42,7 +42,7 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionStatus status;
+    private TransactionStatus status = TransactionStatus.PENDING;
 
     @Column(name = "chat_room_id")
     private Long chatRoomId;
@@ -57,9 +57,7 @@ public class Transaction {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        if (this.completedAt == null) {
-            this.completedAt = this.createdAt;
-        }
+
     }
 
     // 연관관계 메서드
@@ -70,15 +68,16 @@ public class Transaction {
 
 
     @Builder
-    public Transaction(Product product, User buyer, User seller,
-                       Integer priceFinal, Long chatRoomId, LocalDateTime completedAt) {
+    public Transaction(Product product,
+                       User buyer,
+                       User seller,
+                       Integer priceFinal,
+                       Long chatRoomId) {
         this.product = product;
         this.buyer = buyer;
         this.seller = seller;
         this.priceFinal = priceFinal;
         this.chatRoomId = chatRoomId;
-        this.status = TransactionStatus.PENDING;
-        this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
 
 

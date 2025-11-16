@@ -101,9 +101,18 @@ public class ChatMessageService {
     }
 
     // 특정 방의 이전 메시지
-    public List<ChatMessageResponseDto> getChatHistory(Long roomId) {
+    public List<ChatMessageResponseDto> getChatHistory(Long roomId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 참여자 검증
+        boolean participant = chatParticipantRepository.findByChatRoomAndUser(room, user).isPresent();
+        if (!participant) {
+            throw new BusinessException(ErrorCode.NO_PERMISSION);
+        }
 
         return chatMessageRepository.findByChatRoomOrderByCreatedAtAsc(room)
                 .stream()

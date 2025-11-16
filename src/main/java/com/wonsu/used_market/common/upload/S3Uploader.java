@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.UUID;
 
 @Component
 @Profile("prod")
@@ -61,7 +62,7 @@ public class S3Uploader implements FileUploader {
             String safe = file.getOriginalFilename()
                     .replaceAll("[^a-zA-Z0-9._-]", "_");
 
-            String fileName = Instant.now().toEpochMilli() + "_" + safe;
+            String fileName = UUID.randomUUID().toString() + "_" + safe;
 
             // key: products/temp/파일명
             String key = tempPrefix + fileName;
@@ -130,7 +131,7 @@ public class S3Uploader implements FileUploader {
             String safe = file.getOriginalFilename()
                     .replaceAll("[^a-zA-Z0-9._-]", "_");
 
-            String fileName = Instant.now().toEpochMilli() + "_" + safe;
+            String fileName = UUID.randomUUID().toString() + "_" + safe;
 
             // key: products/{productId}/파일명
             String key = productPrefix + productId + "/" + fileName;

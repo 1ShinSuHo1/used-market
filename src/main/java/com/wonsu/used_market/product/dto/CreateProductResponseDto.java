@@ -18,8 +18,11 @@ public class CreateProductResponseDto {
     private List<ProductImageResponseDto> images;
     private String aiGrade;
     private Double confidence;
+    private Long auctionId;
 
-    public CreateProductResponseDto(Product product,Double confidence) {
+
+
+    public CreateProductResponseDto(Product product, Double confidence) {
         this.id = product.getId();
         this.sellerId = product.getSeller().getId();
         this.status = product.getStatus().name();
@@ -29,5 +32,8 @@ public class CreateProductResponseDto {
         this.images = product.getImages().stream()
                 .map(ProductImageResponseDto::new)
                 .collect(Collectors.toList());
+        this.auctionId = (product.getAuction() != null)
+                ? product.getAuction().getId()
+                : null;
     }
 }

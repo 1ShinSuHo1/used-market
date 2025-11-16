@@ -78,7 +78,10 @@ public class Product {
     @OrderBy("thumbnail desc, id asc ")
     private List<ProductImage> images = new ArrayList<>();
 
-    @OneToOne(mappedBy = "product",fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "product",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private Auction auction;
 
     @OneToOne(mappedBy = "product", fetch = FetchType.LAZY)

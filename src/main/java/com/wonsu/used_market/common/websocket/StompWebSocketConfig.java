@@ -45,7 +45,7 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setApplicationDestinationPrefixes("/publish");
 
         // /topic/1형태로 메시지를 수신
-        registry.enableSimpleBroker("/topic");
+        registry.enableSimpleBroker("/topic/chat", "/topic/auction");
 
 
     }

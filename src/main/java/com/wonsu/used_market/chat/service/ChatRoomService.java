@@ -48,9 +48,9 @@ public class ChatRoomService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
 
-        //같은 채팅방이 있는지 확인 페치조인으로 N+1문제 막아두었음
-        Optional<ChatRoom> existingRoom = chatRoomRepository.findByProductAndRoomType(product, ChatRoomType.DIRECT);
-
+        // 같은상품,일반중고거래, 구매자가 이미 참여중인 방이 있나 찾기
+        Optional<ChatRoom> existingRoom =
+                chatRoomRepository.findByProductAndRoomTypeAndUser(product, ChatRoomType.DIRECT, buyer);
         // 존재하면 그 방을 그대로 반환
         if (existingRoom.isPresent()) {
             ChatRoom room = existingRoom.get();
@@ -91,7 +91,7 @@ public class ChatRoomService {
 
         // 기존에 방이 있는지 확인하고 있으면 재사용
         Optional<ChatRoom> existingRoom =
-                chatRoomRepository.findByProductAndRoomType(product, ChatRoomType.AUCTION_INQUIRY);
+                chatRoomRepository.findByProductAndRoomTypeAndUser(product, ChatRoomType.AUCTION_INQUIRY, user);
 
         if (existingRoom.isPresent()) {
             ChatRoom room = existingRoom.get();
@@ -125,10 +125,10 @@ public class ChatRoomService {
     @Transactional
     public ChatRoomCreateResponseDto createAfterTradeRoom(Transaction transaction){
         Product product = transaction.getProduct();
-
+        User buyer = transaction.getBuyer();
         // 기존 채팅방이 있는지 확인
         Optional<ChatRoom> existingRoom =
-                chatRoomRepository.findByProductAndRoomType(product, ChatRoomType.AFTER_TRADE);
+                chatRoomRepository.findByProductAndRoomTypeAndUser(product, ChatRoomType.AFTER_TRADE, buyer);
 
         if (existingRoom.isPresent()) {
             ChatRoom room = existingRoom.get();
@@ -147,7 +147,7 @@ public class ChatRoomService {
 
 
         chatParticipantService.addParticipant(chatRoom, product.getSeller());
-        chatParticipantService.addParticipant(chatRoom, transaction.getBuyer());
+        chatParticipantService.addParticipant(chatRoom, buyer);
 
         return new ChatRoomCreateResponseDto(
                 chatRoom.getId(),

@@ -42,48 +42,29 @@ public class AuctionService {
     //경매 생성
     @Transactional
     public AuctionResponseDto createAuction(CreateAuctionRequestDto dto, User currentUser){
-        //경매 비정상하게 생성시 오류발생
-        if(dto.getStartAt() == null || dto.getEndAt() == null || !dto.getEndAt().isAfter(dto.getStartAt())){
+
+        // dto 검증
+        if (dto.getStartAt() == null || dto.getEndAt() == null || !dto.getEndAt().isAfter(dto.getStartAt())) {
             throw new BusinessException(ErrorCode.INVALID_AUCTION_TIME);
         }
 
-        Product product = productRepository.findById(dto.getProductId()).orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+        Product product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        //소유자 검증
-        if(!product.getSeller().getId().equals(currentUser.getId()) && currentUser.getRole() != Role.ADMIN){
+        // 권한 체크
+        if (!product.getSeller().getId().equals(currentUser.getId())
+                && currentUser.getRole() != Role.ADMIN) {
             throw new BusinessException(ErrorCode.NO_PERMISSION);
         }
 
-        //상품당 1개 경매 제한
-        if(product.getAuction() != null){
-            throw new BusinessException(ErrorCode.AUCTION_ALREADY_EXISTS);
-        }
-
-        Auction auction = Auction.builder()
-                .startPrice(dto.getStartPrice())
-                .startAt(dto.getStartAt())
-                .endAt(dto.getEndAt())
-                .build();
-
-        auction.assignToProduct(product);
-        auctionRepository.save(auction);
-
-        try {
-            // 종료시각까지 남은 시간 + 10분 버퍼
-            long ttlSeconds = Duration.between(LocalDateTime.now(), dto.getEndAt()).getSeconds() + 600;
-            if (ttlSeconds > 0) {
-                String key = "auction:" + auction.getId();
-                redisTemplate.opsForHash().put(key, "currentPrice", dto.getStartPrice());
-                redisTemplate.opsForHash().put(key, "winner", null);
-                redisTemplate.expire(key, Duration.ofSeconds(ttlSeconds));
-                log.info("[AUCTION TTL SET] key={} TTL={}s (≈{}분)", key, ttlSeconds, ttlSeconds / 60);
-            }
-        } catch (Exception e) {
-            log.warn("Redis TTL 설정 실패 (auctionId={})", auction.getId(), e);
-        }
+        // 여기서 공통 메서드 호출만 함
+        Auction auction = createAuctionForProduct(
+                product,
+                dto.getStartPrice(),
+                dto.getEndAt()
+        );
 
         return AuctionResponseDto.from(auction);
-
     }
 
     //입찰
@@ -204,6 +185,52 @@ public class AuctionService {
         if (auction.getStatus() != AuctionStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.AUCTION_NOT_ACTIVE);
         }
+        return auction;
+    }
+
+    @Transactional
+    public Auction createAuctionForProduct(Product product,
+                                           Integer auctionStartPrice,
+                                           LocalDateTime auctionEndAt) {
+
+        if (auctionEndAt == null || !auctionEndAt.isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_AUCTION_TIME);
+        }
+
+        // 상품당 1개 경매 제한
+        if (product.getAuction() != null) {
+            throw new BusinessException(ErrorCode.AUCTION_ALREADY_EXISTS);
+        }
+
+        int startPrice = (auctionStartPrice != null)
+                ? auctionStartPrice
+                : product.getPrice(); // 없으면 상품 가격 사용
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Auction auction = Auction.builder()
+                .startPrice(startPrice)
+                .startAt(now)
+                .endAt(auctionEndAt)
+                .build();
+
+        auction.assignToProduct(product); // product.assignAuction(this)까지 처리
+        auctionRepository.save(auction);
+
+        // 🔁 여기서 Redis TTL 세팅도 같이 처리
+        try {
+            long ttlSeconds = Duration.between(now, auctionEndAt).getSeconds() + 600;
+            if (ttlSeconds > 0) {
+                String key = "auction:" + auction.getId();
+                redisTemplate.opsForHash().put(key, "currentPrice", startPrice);
+                redisTemplate.opsForHash().put(key, "winner", null);
+                redisTemplate.expire(key, Duration.ofSeconds(ttlSeconds));
+                log.info("[AUCTION TTL SET] key={} TTL={}s (≈{}분)", key, ttlSeconds, ttlSeconds / 60);
+            }
+        } catch (Exception e) {
+            log.warn("Redis TTL 설정 실패 (auctionId={})", auction.getId(), e);
+        }
+
         return auction;
     }
 

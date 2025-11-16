@@ -1,5 +1,6 @@
 package com.wonsu.used_market.product.dto;
 
+import com.wonsu.used_market.auction.domain.Auction;
 import com.wonsu.used_market.product.domain.Product;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,6 +38,20 @@ public class ProductDetailResponseDto {
     //판매자와 이미지 정보
     private SellerInfo seller;
     private List<ImageInfo> images;
+
+    private AuctionInfo auction;
+
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class AuctionInfo {
+        private Long id;
+        private Integer startPrice;
+        private Integer currentPrice;
+        private LocalDateTime startAt;
+        private LocalDateTime endAt;
+        private String status;
+    }
 
     @Getter
     @AllArgsConstructor
@@ -87,6 +102,18 @@ public class ProductDetailResponseDto {
                         img.isThumbnail()
                 ))
                 .collect(Collectors.toList());
+
+        if (product.getAuction() != null) {
+            Auction auction = product.getAuction();
+            this.auction = new AuctionInfo(
+                    auction.getId(),
+                    auction.getStartPrice(),
+                    auction.getCurrentPrice(),
+                    auction.getStartAt(),
+                    auction.getEndAt(),
+                    auction.getStatus().name()
+            );
+        }
     }
 
 

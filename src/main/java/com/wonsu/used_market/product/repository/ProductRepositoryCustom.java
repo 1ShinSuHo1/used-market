@@ -11,4 +11,6 @@ import org.springframework.data.domain.Pageable;
 public interface ProductRepositoryCustom {
     Page<ProductListResponseDto> search(ProductSearchCond cond, Pageable pageable);
     Product findWithImages(Long productId);
+    Product findWithImagesAndAuction(Long productId);
+
 }
