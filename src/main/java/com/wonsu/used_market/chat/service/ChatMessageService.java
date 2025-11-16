@@ -42,6 +42,11 @@ public class ChatMessageService {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
+        // 여기 정도에 한 줄:
+        if (room.isClosed()) {
+            throw new BusinessException(ErrorCode.CHAT_ROOM_CLOSED);
+        }
+
         // 사용자 조회
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

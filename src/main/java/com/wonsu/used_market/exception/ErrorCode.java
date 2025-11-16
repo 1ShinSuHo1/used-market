@@ -56,6 +56,7 @@ public enum ErrorCode {
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
     CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅 메시지를 찾을 수 없습니다."),
     CHAT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 채팅방에 접근할 수 없습니다."),
+    CHAT_ROOM_CLOSED(HttpStatus.BAD_REQUEST, "이미 종료된 채팅방입니다."),
 
     // OAuth 관련
     GOOGLE_AUTH_FAILED(HttpStatus.BAD_GATEWAY, "구글 인증 실패"),
