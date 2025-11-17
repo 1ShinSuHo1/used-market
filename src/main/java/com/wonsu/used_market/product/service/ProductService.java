@@ -166,10 +166,6 @@ public class ProductService {
     }
 
     // 상품 목록 조회
-    @Cacheable(
-            value = "productList",
-            key = "#cond.keyword + '_' + #cond.category + '_' + #cond.status + '_' + #pageable.pageNumber"
-    )
     public Map<String, Object> getProducts(ProductSearchCond cond, Pageable pageable) {
         Page<ProductListResponseDto> page = productRepository.search(cond, pageable);
 

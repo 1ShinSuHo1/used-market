@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+import static com.wonsu.used_market.auction.domain.QAuction.auction;
 import static com.wonsu.used_market.product.domain.QProduct.product;
 import static com.wonsu.used_market.product.domain.QProductImage.productImage;
 
@@ -39,6 +40,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
                         product.id,
                         product.title,
                         product.price,
+                        auction.currentPrice.coalesce(product.price),
                         product.maker,
                         product.category.stringValue(),
                         product.saleType.stringValue(),
@@ -47,6 +49,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
                         productImage.imageUrl
                 ))
                 .from(product)
+                .leftJoin(product.auction, auction)
                 .leftJoin(product.images, productImage)
                 .on(productImage.thumbnail.isTrue())
                 .where(

@@ -14,6 +14,7 @@ public class ProductListResponseDto {
     private Long id;
     private String title;
     private Integer price;
+    private Integer currentPrice;
     private String maker;
     private String category;
     private String saleType;
@@ -36,16 +37,23 @@ public class ProductListResponseDto {
                 .findFirst()
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
+        // 👇 여기 핵심
+        if (product.getAuction() != null) {
+            this.currentPrice = product.getAuction().getCurrentPrice();
+        } else {
+            this.currentPrice = product.getPrice();
+        }
     }
 
     // Projection 전용 생성자
 
-    public ProductListResponseDto(Long id, String title, Integer price, String maker,
+    public ProductListResponseDto(Long id, String title, Integer price, Integer currentPrice, String maker,
                                   String category, String saleType, String aiGrade, LocalDateTime createdAt,
                                   String thumbnailUrl) {
         this.id = id;
         this.title = title;
         this.price = price;
+        this.currentPrice = currentPrice;
         this.maker = maker;
         this.category = category;
         this.saleType = saleType;
