@@ -220,16 +220,26 @@ public class ProductService {
         //상품 조회
         Product product = productRepository.findById(productId).orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
+        boolean isSeller = product.getSeller().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole().equals(Role.ADMIN);
+
         //소유자 검증(본인이랑 관리자만 삭제가능하도록 설정)
-        if(!product.getSeller().getId().equals(currentUser.getId())
-                && !currentUser.getRole().equals(Role.ADMIN)){
+        if (!isSeller && !isAdmin) {
             throw new BusinessException(ErrorCode.NO_PERMISSION);
         }
+
         if (transactionRepository.existsByProductId(productId)) {
             throw new BusinessException(ErrorCode.CANNOT_DELETE_PRODUCT_WITH_TRANSACTION);
         }
+
         if (product.getAuction() != null && product.getAuction().getStatus().isActive()) {
-            throw new BusinessException(ErrorCode.CANNOT_DELETE_PRODUCT_WITH_ACTIVE_AUCTION);
+            if (!isAdmin) {
+                // 판매자는 진행 중 경매 상품 삭제 불가
+                throw new BusinessException(ErrorCode.CANNOT_DELETE_PRODUCT_WITH_ACTIVE_AUCTION);
+            }
+
+            // 관리자라면 경매를 먼저 취소 상태로 만들고 삭제 진행
+            product.getAuction().cancelAuction();  // AuctionStatus.CANCELED 로 변경
         }
 
         // 상품이미지 뽑기
