@@ -38,7 +38,7 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 30
+  expiration: 60
   refresh-expiration: 10080
 
 auction:
