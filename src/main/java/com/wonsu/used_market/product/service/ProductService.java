@@ -224,9 +224,7 @@ public class ProductService {
             throw new BusinessException(ErrorCode.NO_PERMISSION);
         }
 
-        if (transactionRepository.existsByProductId(productId)) {
-            throw new BusinessException(ErrorCode.CANNOT_DELETE_PRODUCT_WITH_TRANSACTION);
-        }
+
 
         if (product.getAuction() != null && product.getAuction().getStatus().isActive()) {
             if (!isAdmin) {
