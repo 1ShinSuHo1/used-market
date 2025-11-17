@@ -16,6 +16,7 @@ public class ProductListResponseDto {
     private Integer price;
     private String maker;
     private String category;
+    private String saleType;
     private String aiGrade;
     private LocalDateTime createdAt;
     private String thumbnailUrl;
@@ -27,6 +28,7 @@ public class ProductListResponseDto {
         this.price = product.getPrice();
         this.maker = product.getMaker();
         this.category = product.getCategory().name();
+        this.saleType = product.getSaleType().name();
         this.aiGrade = product.getAiGrade();
         this.createdAt = product.getCreatedAt();
         this.thumbnailUrl = product.getImages().stream()
@@ -39,13 +41,14 @@ public class ProductListResponseDto {
     // Projection 전용 생성자
 
     public ProductListResponseDto(Long id, String title, Integer price, String maker,
-                                  String category, String aiGrade, LocalDateTime createdAt,
+                                  String category, String saleType, String aiGrade, LocalDateTime createdAt,
                                   String thumbnailUrl) {
         this.id = id;
         this.title = title;
         this.price = price;
         this.maker = maker;
         this.category = category;
+        this.saleType = saleType;
         this.aiGrade = aiGrade;
         this.createdAt = createdAt;
         this.thumbnailUrl = thumbnailUrl;

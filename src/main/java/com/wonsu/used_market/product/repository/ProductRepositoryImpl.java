@@ -41,6 +41,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom{
                         product.price,
                         product.maker,
                         product.category.stringValue(),
+                        product.saleType.stringValue(),
                         product.aiGrade,
                         product.createdAt,
                         productImage.imageUrl
