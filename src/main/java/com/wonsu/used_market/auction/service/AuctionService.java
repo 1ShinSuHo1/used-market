@@ -15,8 +15,6 @@ import com.wonsu.used_market.user.domain.Role;
 import com.wonsu.used_market.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,7 +38,7 @@ public class AuctionService {
     private final ProductRepository productRepository;
     private final AuctionProperties auctionProperties;
     private final AuctionStompService auctionStompService;
-    private final CacheManager cacheManager;
+
 
     //경매 생성
     @Transactional
@@ -66,7 +64,6 @@ public class AuctionService {
                 dto.getStartPrice(),
                 dto.getEndAt()
         );
-        evictProductCaches(auction.getProduct().getId());
 
         return AuctionResponseDto.from(auction);
     }
@@ -95,8 +92,6 @@ public class AuctionService {
         // 경매 금액 갱신 및 낙찰자 설정
         auction.placeBid(bidder, bidAmount);
         auctionRepository.save(auction);
-
-        evictProductCaches(auction.getProduct().getId());
 
         // 실시간 반영
         auctionStompService.placeBid(auction.getId(), bidder.getNickname(), bidAmount);
@@ -129,8 +124,6 @@ public class AuctionService {
         auction.placeBid(bidder, nextBid);
         auctionRepository.save(auction);
 
-        evictProductCaches(auction.getProduct().getId());
-
         //실시간 전송
         auctionStompService.placeBid(auction.getId(), bidder.getNickname(), nextBid);
 
@@ -160,8 +153,6 @@ public class AuctionService {
 
         auction.cancelAuction();
         auctionRepository.save(auction);
-
-        evictProductCaches(auction.getProduct().getId());
 
         log.info("[AUCTION CANCELLED] auctionId={} by={}", auction.getId(), currentUser.getNickname());
     }
@@ -245,26 +236,7 @@ public class AuctionService {
             log.warn("Redis TTL 설정 실패 (auctionId={})", auction.getId(), e);
         }
 
-        evictProductCaches(auction.getProduct().getId());
-
         return auction;
-    }
-
-    // 경매 변화 시 상품 관련 캐시 날리는 공통 메서드
-    private void evictProductCaches(Long productId) {
-        // productDetail 캐시: 해당 상품만 삭제
-        Cache productDetailCache = cacheManager.getCache("productDetail");
-        if (productDetailCache != null) {
-            productDetailCache.evict(productId);
-            log.info("[CACHE EVICT] productDetail (productId={})", productId);
-        }
-
-        // productList 캐시: 조건이 여러 개라 키가 복잡하니 그냥 전체 삭제
-        Cache productListCache = cacheManager.getCache("productList");
-        if (productListCache != null) {
-            productListCache.clear();
-            log.info("[CACHE CLEAR] productList (all entries)");
-        }
     }
 
 
