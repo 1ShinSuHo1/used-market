@@ -40,7 +40,7 @@ public class Product {
     @Column(name = "storage_gb")
     private Integer storageGb; // 저장 용량
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 40, nullable = false)
     private String title;
 
     @Lob
